@@ -12,5 +12,14 @@ namespace Game.HideOut
         {
             activeList.ForEach(i => i.SetActive(false));
         }
+
+        public void ActiveOff()
+        {
+            foreach (var active in activeList)
+            {
+                active.SetActive(false);
+            }
+        }
+        
     }
 }
