@@ -131,7 +131,7 @@ namespace Game.MainGame
 
 		public void GotoMainMenu()
 		{
-			SceneManager.LoadScene("GameMenu");
+			SceneManager.LoadScene("Menu");
 		}
 
 		void CloseAttack()

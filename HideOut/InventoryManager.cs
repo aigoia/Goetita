@@ -15,7 +15,7 @@ namespace Game.HideOut
 		public List<Transform> slotList;
 		public Transform itemStock;
 		public Image bicProfile;
-		public CharacterManager characterManager;
+		public Profile.CharacterManager characterManager;
 		public CharacterSelect characterSelect;
 		public Character selectedCharacter;
 		public Transform itemAsk;
@@ -35,11 +35,11 @@ namespace Game.HideOut
 		{
 			SetBicProfile(0);
 			characterSelect.ReSetting();
-			
+
 			for (int i = 0; i < characterManager.currentCharacterList.Count; i++)
 			{
 				characterSelect.buttonList[i].SetActive(true);
-				characterSelect.buttonList[i].GetComponent<CharacterButton>().id =
+				characterSelect.buttonList[i].GetComponent<CharacterManager>().id =
 					characterManager.currentCharacterList[i].CharacterId;
 				characterSelect.buttonList[i].transform.Find("ProfileImage").GetComponent<Image>().sprite =
 					characterManager.currentCharacterList[i].Profile.transform.Find("100x100").GetComponent<Image>().sprite;
