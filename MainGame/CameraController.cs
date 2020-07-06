@@ -65,7 +65,6 @@ namespace Game.MainGame
 		float zMax = 0;
 		public int limit = 4;
 		
-
 		void Awake()
 		{
 			if (_gameManager == null) _gameManager = FindObjectOfType<GameManager>(); 
@@ -113,7 +112,7 @@ namespace Game.MainGame
 
 		private void CheckPosition()
 		{
-			transform.position  = new Vector3(
+			transform.position = new Vector3(
 				Mathf.Clamp(transform.position.x, xMin, xMax),
 				transform.position.y,
 				Mathf.Clamp(transform.position.z, zMin, zMax));
@@ -307,7 +306,12 @@ namespace Game.MainGame
 		
 		Vector3 KeyboardInput
 		{
-			get{return useKeyboardInput ? new Vector3(Input.GetAxis("Horizontal") * horizontalWeight, 0f, Input.GetAxis("Vertical") * verticalWeight) : Vector3.zero;}
+			get{return useKeyboardInput ? 
+				new Vector3(
+				Input.GetAxis("Horizontal") * horizontalWeight, 
+				0f, 
+				Input.GetAxis("Vertical") * verticalWeight) 
+				: Vector3.zero;}
 		}
 		
 		Vector2 MouseInput

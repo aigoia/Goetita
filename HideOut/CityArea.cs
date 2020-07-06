@@ -7,6 +7,7 @@ using UnityEngine;
 
 public class CityArea : MonoBehaviour
 {
+    private CityAreaManager _cityAreaManager;
     private CharacterManager _characterManager;
     public float censorExtents = 1f;
     public Vector3 height = new Vector3(0, 1.5f, 0);
@@ -16,6 +17,7 @@ public class CityArea : MonoBehaviour
     private void Awake()
     {
         if (_characterManager == null) _characterManager = FindObjectOfType<CharacterManager>();
+        if (_cityAreaManager == null) _cityAreaManager = FindObjectOfType<CityAreaManager>();
     }
 
     private void OnMouseDown()

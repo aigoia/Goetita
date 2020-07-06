@@ -64,7 +64,7 @@ namespace Game.HideOut
             }
         }
 
-        private void Take(Character itemHaveCharacter, Item currentItem)
+        private void Take(Profile.Character itemHaveCharacter, Item currentItem)
         {
             // Appear
             var currentItems = inventoryManager.selectedCharacter.ItemList;

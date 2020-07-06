@@ -17,7 +17,7 @@ namespace Game.HideOut
 		public Image bicProfile;
 		public Profile.CharacterManager characterManager;
 		public CharacterSelect characterSelect;
-		public Character selectedCharacter;
+		public Profile.Character selectedCharacter;
 		public Transform itemAsk;
 		public int limitSlot = 2;
 

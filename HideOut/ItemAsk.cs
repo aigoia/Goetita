@@ -10,11 +10,11 @@ namespace Game.HideOut
 		public TextMeshProUGUI testMesh;
 		public Button take;
 		public Button keep;
-		public Character itemHaveCharacter;
+		public Profile.Character itemHaveCharacter;
 		public Item currentItem;
 		public InventoryManager inventoryManager;
 		public MarketManager marketManager;
-		public Character selectedCharacter;
+		public Profile.Character selectedCharacter;
 
 		public void Take()
 		{

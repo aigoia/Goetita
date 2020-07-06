@@ -1,6 +1,8 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Profile;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -9,6 +11,13 @@ public class CityAreaManager : MonoBehaviour
     public GameObject mainCharacter;
     public List<CityArea> cityAreaList;
     public float roadCensor = 1f;
+    public IconManager iconManager;
+
+    private void Awake()
+    {
+        if (iconManager == null) iconManager = FindObjectOfType<IconManager>();
+        if (mainCharacter == null) print("MainCharacter is Missing!");
+    }
 
     [ContextMenu("Collect Nodes")]
     public void CollectNodes()
@@ -22,7 +31,6 @@ public class CityAreaManager : MonoBehaviour
         foreach (var cityArea in cityAreaList)
         {
             // print(cityArea.name);
-            
             var thisTransform = cityArea.transform;
             var forward = thisTransform.forward;
             var connectedRoadList = new List<Road>();
@@ -63,15 +71,11 @@ public class CityAreaManager : MonoBehaviour
                                 
                             connectedNodeList.Add(node);
                         }
-						
                     }
                 }
             }
-
+            
             cityArea.connectedNodeList = connectedNodeList;
         }
-        
-        
     }
 }
-
