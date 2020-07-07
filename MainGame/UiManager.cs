@@ -34,22 +34,21 @@ namespace Game.MainGame
 		
 		void MakeHpBar(Enemy enemy, Color color)
 		{
-			if (Camera.main != null)
-			{
-				var newClone = Instantiate 
-				(
-					barObject, 
-					Camera.main.WorldToScreenPoint(enemy.transform.position + posCorrection),
-					Quaternion.identity, canvas.Find("Hp")
-				);
+			if (Camera.main == null) return;
+			
+			var newClone = Instantiate 
+			(
+				barObject, 
+				Camera.main.WorldToScreenPoint(enemy.transform.position + posCorrection),
+				Quaternion.identity, canvas.Find("Hp")
+			);
 
-				var newBar = new BarNode{BaseTransform = enemy.transform, BarObject = newClone};
-				barList.Add(newBar);
-				var hpBar = newClone.GetComponent<CharacterBar>();
-				hpBar.healthBar.color = color;
-				enemy.characterBar = hpBar;
-				hpBar.enemy = enemy;
-			}
+			var newBar = new BarNode{BaseTransform = enemy.transform, BarObject = newClone};
+			barList.Add(newBar);
+			var hpBar = newClone.GetComponent<CharacterBar>();
+			hpBar.healthBar.color = color;
+			enemy.characterBar = hpBar;
+			hpBar.enemy = enemy;
 		}
 
 		void MakeHpBar(Player player, Color color)

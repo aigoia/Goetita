@@ -13,6 +13,7 @@ public class CityArea : MonoBehaviour
     public Vector3 height = new Vector3(0, 1.5f, 0);
     public List<CityArea> connectedNodeList;
     public List<Road> connectedRoadList;
+    public bool testIconOn = false;
 
     private void Awake()
     {

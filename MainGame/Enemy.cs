@@ -28,9 +28,7 @@ namespace Game.MainGame
 		public int currentVigor = 2;
 		[SerializeField] private float alpha = 1f;
 		public float deadHeight = 1f;
-		
 
-			
 		public CharacterType characterType = CharacterType.Default;
 		
 		public bool canTargeted = false;

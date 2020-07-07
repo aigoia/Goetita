@@ -12,11 +12,38 @@ public class CityAreaManager : MonoBehaviour
     public List<CityArea> cityAreaList;
     public float roadCensor = 1f;
     public IconManager iconManager;
+    public GameObject testIcon;
 
     private void Awake()
     {
         if (iconManager == null) iconManager = FindObjectOfType<IconManager>();
         if (mainCharacter == null) print("MainCharacter is Missing!");
+        if (testIcon == null) print("TestIcon is Missing");
+        
+        CityAreaStart();
+    }
+
+    void CityAreaStart()
+    {
+        foreach (var cityArea in cityAreaList)
+        {
+            if (cityArea.testIconOn)
+            {
+                print("TestIcon is Ready");
+                var pos = new Vector3(cityArea.transform.position.x +5,cityArea.transform.position.y +5, 0f);
+                Instantiate(testIcon, pos, Quaternion.LookRotation(Camera.main.transform.position), iconManager.transform);
+            }
+        }
+    }
+
+    [ContextMenu("Make Base Icons")]
+    public void MakeBaseIcons()
+    {
+        foreach (var cityArea in cityAreaList)
+        {
+            var pos = new Vector3(cityArea.transform.position.x +5, cityArea.transform.position.y +2.5f, -20f);
+            Instantiate(testIcon, pos, Quaternion.LookRotation(Camera.main.transform.position), iconManager.transform); ;
+        }
     }
 
     [ContextMenu("Collect Nodes")]
