@@ -98,7 +98,7 @@ namespace Game.HideOut
         
         private void Enroll()
         {
-            foreach (var character in inventoryManager.characterManager.currentCharacterList)
+            foreach (var character in inventoryManager.dataManager.currentCharacterList)
             {
                 foreach (var item in character.ItemList)
                 {
@@ -151,7 +151,7 @@ namespace Game.HideOut
             {
                 ChangeGold(ItemButtonType.Sell);
                 marketManager.ownedItems.RemoveAll(i => i.ItemId == itemId);
-                foreach (var character in inventoryManager.characterManager.currentCharacterList)
+                foreach (var character in inventoryManager.dataManager.currentCharacterList)
                 {
                     character.ItemList.RemoveAll(i => i.ItemId == itemId);
                 }

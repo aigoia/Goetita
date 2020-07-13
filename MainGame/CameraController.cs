@@ -58,13 +58,13 @@ namespace Game.MainGame
 		private List<Vector3> _rangeVectorList;
 		public int rangeLevel = 2;
 
-		[FormerlySerializedAs("_board")] public Board board;
+		public Board board;
 		float xMin = 0;
 		float xMax = 0;
 		float zMin = 0;
 		float zMax = 0;
 		public int limit = 4;
-		
+
 		void Awake()
 		{
 			if (_gameManager == null) _gameManager = FindObjectOfType<GameManager>(); 
@@ -100,6 +100,7 @@ namespace Game.MainGame
 			if (thisCamera == null) thisCamera = transform.Find("Camera").GetComponent<Camera>();
 
 			_rangeVectorList = new List<Vector3> {_rangeDown, _rangeMiddle, _rangeUp};
+			
 		}
 		
 		void Update()

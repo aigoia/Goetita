@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using Random = UnityEngine.Random;
 
 namespace Game.MainGame
@@ -349,6 +350,7 @@ namespace Game.MainGame
 		
 		private void OnMouseEnter()
 		{
+			if (EventSystem.current.IsPointerOverGameObject()) return;
 			if (_gameManager.currentPlayer == null) return;
 			if (_gameManager.currentPlayer.characterType != CharacterType.Ranger) return;
 			if (_gameManager.somethingOn) return;
@@ -359,6 +361,7 @@ namespace Game.MainGame
 
 		void OnMouseDown()
 		{
+			if (EventSystem.current.IsPointerOverGameObject()) return;
 			if (_gameManager.currentPlayer == null) return;
 
 			AttackRangeByPlayer(this);

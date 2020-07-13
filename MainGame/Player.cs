@@ -4,6 +4,7 @@ using Random = UnityEngine.Random;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
+using UnityEngine.EventSystems;
 
 namespace Game.MainGame
 {
@@ -655,6 +656,7 @@ namespace Game.MainGame
 
 		void OnMouseDown()
 		{
+			if (EventSystem.current.IsPointerOverGameObject()) return;
 			if (canSelect == false) return;
 			if (_gameManager.somethingOn == true) return;
 			

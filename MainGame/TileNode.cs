@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace Game.MainGame
 {
@@ -366,6 +367,7 @@ namespace Game.MainGame
 		
 		void OnMouseEnter()
 		{
+			if (EventSystem.current.IsPointerOverGameObject()) return;
 			if (_gameManager.somethingOn) return;
 			if (_gameManager.currentPlayer == null) return;
 			_gameManager.currentPlayer.RangeOff(_gameManager.activeEnemyList);
@@ -383,6 +385,7 @@ namespace Game.MainGame
 
 		void OnMouseExit()
 		{
+			if (EventSystem.current.IsPointerOverGameObject()) return;
 			if (_gameManager.somethingOn) return;
 			
 			OutRangeEnemy();
@@ -391,6 +394,7 @@ namespace Game.MainGame
 
 		void OnMouseDown()
 		{
+			if (EventSystem.current.IsPointerOverGameObject()) return;
 			if (_gameManager.somethingOn) return;
 
 			// enable moving

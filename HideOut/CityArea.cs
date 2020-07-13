@@ -5,6 +5,7 @@ using DG.Tweening;
 using Game.HideOut;
 using Profile;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class CityArea : MonoBehaviour
 {
@@ -26,9 +27,11 @@ public class CityArea : MonoBehaviour
     
     private void OnMouseUp()
     {
+        if (EventSystem.current.IsPointerOverGameObject()) return;
+        
         if (_cityAreaManager.initCount >= 1)
         {
-            print(_cityAreaManager.mainCharacter);
+            // print(_cityAreaManager.mainCharacter);
             iTween.MoveTo(_cityAreaManager.mainCharacter, this.transform.position + height, 1f); 
             _cityAreaManager.initCount -= 1;
             
@@ -50,5 +53,6 @@ public class CityArea : MonoBehaviour
             _cityAreaManager.ButtonOff();
             _cityAreaManager.ButtonOn(this);
         }
+
     }
 }

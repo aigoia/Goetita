@@ -18,11 +18,12 @@ namespace Game.HideOut
         Rect _upRect;
         Rect _downRect;
         Vector3 _desiredVector;
+
         
-        float xMin = 0;
-        float xMax = 0;
-        float zMin = 0;
-        float zMax = 0;
+        public float xMin = 0;
+        public float xMax = 0;
+        public float zMin = 0;
+        public float zMax = 0;
         
         float verticalWeight = 1;
         float horizontalWeight = 1;
@@ -34,12 +35,14 @@ namespace Game.HideOut
             _rightRect = new Rect(Screen.width - screenEdgeBorder, -1, screenEdgeBorder, Screen.height);
             _upRect = new Rect(-1, Screen.height - screenEdgeBorder + 1, Screen.width, screenEdgeBorder);
             _downRect = new Rect(-1, -1, Screen.width, screenEdgeBorder);
+            
         }
 
         void Update()
         {
             MouseController();
             KeyboardController();
+            CheckPos();
         }
         
         private void CheckPos()

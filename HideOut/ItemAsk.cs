@@ -39,7 +39,7 @@ namespace Game.HideOut
 			
 			// Disappear
 			print("this : " + currentItem.ItemId);
-			foreach (var character in inventoryManager.characterManager.currentCharacterList)
+			foreach (var character in inventoryManager.dataManager.currentCharacterList)
 			{
 				if (character.CharacterId == itemHaveCharacter.CharacterId)
 				{
