@@ -87,5 +87,55 @@ namespace Game.MainGame
                 list[random2] = tmp;
             }
         }
+
+        public static void PrintList(List<GameObject> list)
+        {
+            foreach (var item in list)
+            {
+                print(item.name);
+            }
+        }
+        
+        public static void PrintList(List<Transform> list)
+        {
+            foreach (var item in list)
+            {
+                print(item.name);
+            }
+        }
+        
+        public static void PrintList(List<int> list)
+        {
+            foreach (var item in list)
+            {
+                print(item);
+            }
+        }
+        
+        public static void PrintList(List<string> list)
+        {
+            foreach (var item in list)
+            {
+                print(item);
+            }
+        }
+        
+        
+
+        public static List<int> RandomExtraction(int count, int cut)
+        {
+            var newList = new List<int>();
+            
+            for (int i = 0; i < count; i++)
+            {
+                newList.Add(i);
+            }
+                        
+            GameUtility.ShuffleList(newList);
+                        
+            var returnList = newList.GetRange(0, cut);
+            
+            return returnList;
+        }
     }
 }

@@ -19,7 +19,8 @@ public class CityArea : MonoBehaviour
     public bool hasEvent = false;
 
     public IconBase iconBase;
-    
+    public Accident assignedAccident = null;
+
     private void Awake()
     {
         if (_cityAreaManager == null) _cityAreaManager = FindObjectOfType<CityAreaManager>();

@@ -40,6 +40,15 @@ namespace Game.HideOut
             }
         }
 
+        public void Renewal()
+        {
+            foreach (var icon in iconBaseList)
+            {
+                CheckEventIcon(icon.BaseTransform.GetComponent<CityArea>(), icon.gameObject);
+                CheckMarketIcon(icon.BaseTransform.GetComponent<CityArea>(), icon.gameObject);
+            }
+        }
+
         void MakeCityAreaIcon(CityArea cityArea)
         {
 
