@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using TMPro;
 
 namespace Game.HideOut
 {
@@ -8,6 +9,8 @@ namespace Game.HideOut
 		public List<GameObject> mainWindowList = new List<GameObject>();
 		public List<Transform> marketButtonList = new List<Transform>();
 
+		public TextMeshPro turnDate;
+		
 		[Header("Team Panel")]
 		public GameObject leftPanel;
 		public GameObject middlePanel;
@@ -21,17 +24,7 @@ namespace Game.HideOut
 			middlePanel.SetActive(button);
 			rightPanel.SetActive(button);
 		}
-
-		private string GoldToText(int money)
-		{
-			if (money > 999999)
-			{
-				return "999999";
-			}
-			else
-			{
-				return money.ToString();
-			}
-		}
+		
+		
 	}
 }

@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using Game.Data;
 using TMPro;
 using UnityEngine;
 
@@ -8,6 +10,7 @@ namespace Game.HideOut
 	{
 		public InventoryManager inventoryManager;
 		public ItemDataManager itemDataManager;
+		public DataManager dataManager;
 		
 		public int discount = 2;
 		public MarketItem buy;
@@ -16,12 +19,17 @@ namespace Game.HideOut
 		
 		public List<Item> testItemList;
 		public List<Item> supplyList;
-		
-		public TextMeshProUGUI goldText;
-		public int gold;
+
 		public int testGold = 1000;
 		public Transform inventoryFull;
-		
+
+
+		private void Awake()
+		{
+			if (dataManager == null) dataManager = FindObjectOfType<DataManager>();
+			if (inventoryManager == null) inventoryManager = FindObjectOfType<InventoryManager>();
+		}
+
 		private void Start()
 		{
 			SettingGold(testGold); // Test
@@ -83,8 +91,8 @@ namespace Game.HideOut
 
 		private void SettingGold(int money)
 		{
-			gold = money;
-			goldText.text = money.ToString();
+			dataManager.gold = money;
+			dataManager.RenewalGold();
 		}
 		
 		private TextMeshProUGUI GetPriceText(MarketItem market, int index)

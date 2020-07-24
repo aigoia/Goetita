@@ -1,5 +1,4 @@
-﻿using Profile;
-using TMPro;
+﻿using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,11 +9,11 @@ namespace Game.HideOut
 		public TextMeshProUGUI testMesh;
 		public Button take;
 		public Button keep;
-		public Profile.Character itemHaveCharacter;
+		public Data.Character itemHaveCharacter;
 		public Item currentItem;
 		public InventoryManager inventoryManager;
 		public MarketManager marketManager;
-		public Profile.Character selectedCharacter;
+		public Data.Character selectedCharacter;
 
 		public void Take()
 		{

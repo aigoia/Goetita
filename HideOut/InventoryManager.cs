@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using Game.Data;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using Profile;
 using UnityEngine.Serialization;
 
 namespace Game.HideOut
@@ -16,15 +16,15 @@ namespace Game.HideOut
 		public List<Transform> slotList;
 		public Transform itemStock;
 		public Image bicProfile;
-		public Profile.DataManager dataManager;
+		public DataManager dataManager;
 		public CharacterSelect characterSelect;
-		public Profile.Character selectedCharacter;
+		public Data.Character selectedCharacter;
 		public Transform itemAsk;
 		public int limitSlot = 2;
 
 		private void Awake()
 		{
-			if (dataManager == null) dataManager = FindObjectOfType<Profile.DataManager>();
+			if (dataManager == null) dataManager = FindObjectOfType<DataManager>();
 		}
 
 		private void Start()

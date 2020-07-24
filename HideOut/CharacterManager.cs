@@ -8,7 +8,7 @@ namespace Game.HideOut
         public List<Character> activeCharacters = new List<Character>();
         public List<CharacterButton> allCharacterButtons = new List<CharacterButton>();
         public List<CharacterButton> activeCharacterButtons = new List<CharacterButton>();
-        
+        public float censorExtents = 1f;
 
         private void Start()
         {
@@ -44,6 +44,17 @@ namespace Game.HideOut
         
             ES3.Save<List<Character>>("defaultCharacters", characters);
         
+        }
+
+        public CityArea WhereIam()
+        {
+            var origins = Physics.BoxCastAll(transform.position, Vector3.one * censorExtents, Vector3.forward, Quaternion.identity, 0, LayerMask.GetMask("CityArea"));
+            if (origins.Length == 0) return null;
+        
+            var originArea = origins[0].transform.GetComponent<CityArea>();
+            if (originArea == null) return null;
+
+            return originArea;
         }
     }
     

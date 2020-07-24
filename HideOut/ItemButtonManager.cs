@@ -1,6 +1,6 @@
 ﻿using System;
 using Dark_UI.Scripts;
-using Profile;
+using Game.Data;
 using TMPro;
 using UnityEngine;
 
@@ -16,8 +16,11 @@ namespace Game.HideOut
         public AudioSource sound;
         public ItemButtonType buttonType = ItemButtonType.Buy;
         public float invokeTime = 0.3f;
+        
         public MarketManager marketManager;
         public InventoryManager inventoryManager;
+        DataManager _dataManager;
+        
         public Transform background;
         public Transform icon;
         public Transform highlighted;
@@ -32,6 +35,8 @@ namespace Game.HideOut
         
         private void Awake()
         {
+            if (_dataManager == null) _dataManager = FindObjectOfType<DataManager>();
+            
             if (marketManager == null)
             {
                 if (buttonType == ItemButtonType.Buy || buttonType == ItemButtonType.Sell)
@@ -64,7 +69,7 @@ namespace Game.HideOut
             }
         }
 
-        private void Take(Profile.Character itemHaveCharacter, Item currentItem)
+        private void Take(Data.Character itemHaveCharacter, Item currentItem)
         {
             // Appear
             var currentItems = inventoryManager.selectedCharacter.ItemList;
@@ -184,14 +189,14 @@ namespace Game.HideOut
 
             if (type == ItemButtonType.Buy)
             {
-                marketManager.gold = marketManager.gold - money; 
-                marketManager.goldText.text = marketManager.gold.ToString();
+                _dataManager.gold = _dataManager.gold - money; 
+                _dataManager.RenewalGold();
             }
             else if (type == ItemButtonType.Sell)
             {
                 money = money / marketManager.discount;
-                marketManager.gold = marketManager.gold + money; 
-                marketManager.goldText.text = marketManager.gold.ToString();
+                _dataManager.gold = _dataManager.gold + money; 
+               _dataManager.RenewalGold();
             }
         }
     }

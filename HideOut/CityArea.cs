@@ -2,10 +2,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
+using Game.Data;
 using Game.HideOut;
-using Profile;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Serialization;
 
 public class CityArea : MonoBehaviour
 {
@@ -15,15 +16,23 @@ public class CityArea : MonoBehaviour
     public List<CityArea> connectedNodeList;
     public List<Road> connectedRoadList;
     
-    public bool hasMarket = false;
-    public bool hasEvent = false;
-
+    public GameManager gameManager;
+    public AccidentManager accidentManager; 
+    CharacterManager _characterManager;
+    DataManager _dataManager;
+    
     public IconBase iconBase;
     public Accident assignedAccident = null;
-
+    public int id;
+    public float moveSpeed = 1f;
+    
     private void Awake()
     {
+        if (_dataManager == null) _dataManager = FindObjectOfType<DataManager>();
         if (_cityAreaManager == null) _cityAreaManager = FindObjectOfType<CityAreaManager>();
+        if (gameManager == null) gameManager = FindObjectOfType<GameManager>();
+        if (accidentManager == null) accidentManager = FindObjectOfType<AccidentManager>();
+        if (_characterManager == null) _characterManager = FindObjectOfType<CharacterManager>();
     }
     
     private void OnMouseUp()
@@ -41,19 +50,27 @@ public class CityArea : MonoBehaviour
             return;
         }
 
-        var origins = Physics.BoxCastAll(_cityAreaManager.mainCharacter.transform.position, Vector3.one * censorExtents, Vector3.forward, Quaternion.identity, 0, LayerMask.GetMask("CityArea"));
-
-        if (origins.Length == 0) return;
-        
-        var originArea = origins[0].transform.GetComponent<CityArea>();
+        var originArea = _characterManager.WhereIam();
         if (originArea == null) return;
         
+        // add turn
         if (originArea.connectedNodeList.Exists(i => i.name == this.name))
         {
-            iTween.MoveTo(_cityAreaManager.mainCharacter, this.transform.position + height, 1f);
+            iTween.MoveTo(_cityAreaManager.mainCharacter, this.transform.position + height, moveSpeed);
+            var waitForSeconds = new WaitForSeconds(moveSpeed);
+            
+            PlusTurnDate();
+            accidentManager.removeSelectedAccident();
+            
+            accidentManager.SpendAllExpiry(_cityAreaManager.cityAreaList);
             _cityAreaManager.ButtonOff();
             _cityAreaManager.ButtonOn(this);
         }
 
+        void PlusTurnDate()
+        {
+            _dataManager.turnDate += 1;
+            _dataManager.RenewalTurnData();
+        }
     }
 }

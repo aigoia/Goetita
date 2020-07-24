@@ -17,6 +17,14 @@ namespace Game.HideOut
         public GameObject marketButton;
         public GameObject inventoryButton;
 
+        public int marginalExpiry = 1;
+        public Color disappearColor;
+        public Color normalColor;
+        
+        public float third;
+        public float Second;
+        public float first;
+        
         
         private void Awake()
         {
@@ -40,18 +48,18 @@ namespace Game.HideOut
             }
         }
 
-        public void Renewal()
+        public void RenewalIcon()
         {
-            foreach (var icon in iconBaseList)
+            foreach (var iconBase in iconBaseList)
             {
-                CheckEventIcon(icon.BaseTransform.GetComponent<CityArea>(), icon.gameObject);
-                CheckMarketIcon(icon.BaseTransform.GetComponent<CityArea>(), icon.gameObject);
+                CheckColor(iconBase.BaseTransform.GetComponent<CityArea>(), iconBase);
+                CheckEventIcon(iconBase.BaseTransform.GetComponent<CityArea>(), iconBase);
+                CheckMarketIcon(iconBase.BaseTransform.GetComponent<CityArea>(), iconBase);
             }
         }
 
         void MakeCityAreaIcon(CityArea cityArea)
         {
-
             if (Camera.main == null) return;
 
             var posOnCamera = Camera.main.WorldToScreenPoint(cityArea.transform.position + posCorrection);
@@ -65,20 +73,62 @@ namespace Game.HideOut
             cityArea.iconBase = iconBase;
             iconBase.BaseTransform = cityArea.transform;
 
-            CheckMarketIcon(cityArea, newClone);
-            CheckEventIcon(cityArea, newClone);
+            CheckIcon(cityArea, iconBase);
         }
 
-        void CheckMarketIcon(CityArea cityArea, GameObject icon)
+        void CheckIcon(CityArea cityArea, IconBase icon)
         {
-            icon.transform.Find("MarketIcon").gameObject.SetActive(cityArea.hasMarket);
+            CheckColor(cityArea, icon);
+            CheckMarketIcon(cityArea, icon);
+            CheckEventIcon(cityArea, icon);
+        }
+
+        void CheckMarketIcon(CityArea cityArea, IconBase icon)
+        {
+            if (cityArea.assignedAccident == null)
+            {
+                icon.transform.Find("MarketIcon").gameObject.SetActive(false);
+                return;
+            }
+
+            if (cityArea.assignedAccident.accidentType == AccidentType.Market)
+            {
+                icon.transform.Find("MarketIcon").gameObject.SetActive(true);    
+            }
+            
         }
         
-        void CheckEventIcon(CityArea cityArea, GameObject icon)
+        void CheckEventIcon(CityArea cityArea, IconBase icon)
         {
-            icon.transform.Find("EventIcon").gameObject.SetActive(cityArea.hasEvent);
+            if (cityArea.assignedAccident == null)
+            {
+                icon.transform.Find("EventIcon").gameObject.SetActive(false);
+                return;
+            }
+
+            if (cityArea.assignedAccident.accidentType == AccidentType.Event)
+            {
+                icon.transform.Find("EventIcon").gameObject.SetActive(true);
+            }
         }
-        
+
+        void CheckColor(CityArea cityArea, IconBase icon)
+        {
+            if (cityArea.assignedAccident == null || cityArea.assignedAccident.expiry >= marginalExpiry)
+            {   
+                // if (cityArea.assignedAccident != null) print(cityArea.assignedAccident.expiry);
+                
+                icon.marketBoundary.color = normalColor;
+                icon.EventBoundary.color = normalColor;
+                return;
+            }
+
+            if (cityArea.assignedAccident.expiry < marginalExpiry)
+            {
+                // print(cityArea.assignedAccident.expiry);
+                icon.EventBoundary.color = disappearColor;
+                icon.marketBoundary.color = disappearColor;
+            }
+        }
     }
-    
 }

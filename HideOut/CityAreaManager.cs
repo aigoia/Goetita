@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Game.HideOut;
-using Profile;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Serialization;
@@ -29,7 +28,18 @@ public class CityAreaManager : MonoBehaviour
     {
         UiCheck();
     }
-    
+
+    [ContextMenu("Input ID")]
+    public void InputId()
+    {
+        var n = 0;
+        
+        foreach (var cityArea in cityAreaList)
+        {
+            cityArea.id = n;
+            n += 1;
+        }
+    }
 
     public void ButtonOff()
     {
@@ -40,12 +50,20 @@ public class CityAreaManager : MonoBehaviour
 
     public void ButtonOn(CityArea cityArea)
     {
-        if (cityArea.hasEvent)
+        if (cityArea.assignedAccident == null)
+        {
+            uiManager.eventButton.SetActive(false);
+            uiManager.eventButton.SetActive(false);
+            uiManager.inventoryButton.SetActive(true);
+            return;
+        }
+        
+        if (cityArea.assignedAccident.accidentType == AccidentType.Event)
         {
             uiManager.eventButton.SetActive(true);    
         }
         
-        if (cityArea.hasMarket)
+        if (cityArea.assignedAccident.accidentType == AccidentType.Market)
         {
             uiManager.marketButton.SetActive(true);
         }

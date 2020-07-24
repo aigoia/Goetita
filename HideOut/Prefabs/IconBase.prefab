@@ -510,3 +510,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dfe394fd286d447c59ae1906834b3b7f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  BaseTransform: {fileID: 0}
+  baseCityArea: {fileID: 0}
+  marketIcon: {fileID: 1079817019310213735}
+  eventIcon: {fileID: 1807907037184194473}
+  marketBoundary: {fileID: 9164689715561540001}
+  EventBoundary: {fileID: 198022669851367959}
