@@ -10,7 +10,7 @@ namespace Game.MainGame
 	public class CameraController : MonoBehaviour
 	{
 		public Transform mainCanvas;
-		public int cameraZoomOut = 15;
+		public int cameraZoomOut = 9;
 		public int cameraZoomIn = 3;
 		readonly int change = 6;
 		readonly int minCameraSize = 3;
@@ -38,6 +38,7 @@ namespace Game.MainGame
 		float verticalWeight = 2;
 		float horizontalWeight = 1;
 		public Camera thisCamera;
+		public int area = 20;
 
 		List<Clockwise> _clockwiseList;
 		Clockwise _zeroClock;
@@ -59,10 +60,10 @@ namespace Game.MainGame
 		public int rangeLevel = 2;
 
 		public Board board;
-		float xMin = 0;
-		float xMax = 0;
-		float zMin = 0;
-		float zMax = 0;
+		float _xMin = 0;
+		float _xMax = 0;
+		float _zMin = 0;
+		float _zMax = 0;
 		public int limit = 4;
 
 		void Awake()
@@ -72,10 +73,10 @@ namespace Game.MainGame
 			if (board == null) board = FindObjectOfType<Board>();
 			
 			// boundary
-			xMin = GameUtility.interval * limit;
-			xMax = GameUtility.interval * (board.boardSize.x - limit);
-			zMin = GameUtility.interval * limit;
-			zMax = GameUtility.interval * (board.boardSize.y - limit);
+			_xMin = GameUtility.interval * limit;
+			_xMax = GameUtility.interval * (board.boardSize.x - limit);
+			_zMin = GameUtility.interval * limit;
+			_zMax = GameUtility.interval * (board.boardSize.y - limit);
 			
 			// make clockwise List
 			_clockwiseList = new List<Clockwise>();
@@ -100,9 +101,14 @@ namespace Game.MainGame
 			if (thisCamera == null) thisCamera = transform.Find("Camera").GetComponent<Camera>();
 
 			_rangeVectorList = new List<Vector3> {_rangeDown, _rangeMiddle, _rangeUp};
-			
 		}
-		
+
+		private void Start()
+		{
+			CameraOut();
+			CameraIn();
+		}
+
 		void Update()
 		{
 			Zoom();
@@ -113,10 +119,12 @@ namespace Game.MainGame
 
 		private void CheckPosition()
 		{
-			transform.position = new Vector3(
-				Mathf.Clamp(transform.position.x, xMin, xMax),
-				transform.position.y,
-				Mathf.Clamp(transform.position.z, zMin, zMax));
+			var position = transform.position;
+			position = new Vector3(
+				Mathf.Clamp(position.x, _xMin, _xMax),
+				position.y,
+				Mathf.Clamp(position.z, _zMin, _zMax));
+			transform.position = position;
 		}
 
 		void Zoom()
@@ -148,8 +156,6 @@ namespace Game.MainGame
 
 		void CameraOut()
 		{
-			RangeOff();
-			
 			rangeLevel = rangeLevel + 1;
 			cameraZoomOut += change;
 			thisCamera.orthographicSize = cameraZoomOut;
@@ -157,52 +163,16 @@ namespace Game.MainGame
 			int newInt  = (int)(((localScale.x) / 3) * 2);
 			localScale -= Vector3.one * newInt;
 			hp.localScale = localScale;
-
-			RangeOn();
 		}
-
-		void RangeOff()
-		{
-			if (_gameManager.currentPlayer == null) return;
-				
-			foreach (var enemy in _gameManager.currentPlayer.RangeAttackList(_gameManager.currentPlayer.round.transform.position))
-			{
-				enemy.characterBar.rangeDown.SetActive(false);
-				enemy.characterBar.rangeUp.SetActive(false);
-			}
-		}
-
-		void RangeOn()
-		{
-			if (_gameManager.currentPlayer == null) return;
-			
-			foreach (var enemy in _gameManager.currentPlayer.RangeAttackList(_gameManager.currentPlayer.round.transform.position))
-			{
-				if (rangeLevel == 0 || rangeLevel == 1)
-				{
-					enemy.characterBar.rangeDown.SetActive(false);
-					enemy.characterBar.rangeDown.SetActive(true);
-				}
-				else if (rangeLevel == 2)
-				{
-					enemy.characterBar.rangeUp.SetActive(false);
-					enemy.characterBar.rangeUp.SetActive(true);
-				}
-			}
-		}
-
+		
 		void CameraIn()
 		{
-			RangeOff();
-
 			rangeLevel = rangeLevel - 1;
 			cameraZoomOut -= change;
 			thisCamera.orthographicSize = cameraZoomOut;
 			var localScale = hp.localScale;
 			localScale += (localScale.x) * (localScale.x) * Vector3.one;
 			hp.localScale = localScale;
-			
-			RangeOn();
 		}
 
 		Clockwise MakeClockwise(string clockName, int index, Vector3 rotation)
@@ -284,6 +254,7 @@ namespace Game.MainGame
 			desiredMove.z *= _upRect.Contains(MouseInput) ? 1 : _downRect.Contains(MouseInput) ? -1 : 0;
 
 			if (desiredMove == Vector3.zero) return;
+			if (desiredMove == null) return;
 		
 			desiredMove *= screenEdgeMovementSpeed * Time.deltaTime;
 			desiredMove = currentClock.DesiredQuaternion * desiredMove;
@@ -305,20 +276,15 @@ namespace Game.MainGame
 			return 0;
 		}
 		
-		Vector3 KeyboardInput
-		{
-			get{return useKeyboardInput ? 
+		Vector3 KeyboardInput =>
+			useKeyboardInput ? 
 				new Vector3(
-				Input.GetAxis("Horizontal") * horizontalWeight, 
-				0f, 
-				Input.GetAxis("Vertical") * verticalWeight) 
-				: Vector3.zero;}
-		}
-		
-		Vector2 MouseInput
-		{
-			get{return Input.mousePosition;}
-		}
+					Input.GetAxis("Horizontal") * horizontalWeight, 
+					0f, 
+					Input.GetAxis("Vertical") * verticalWeight) 
+				: Vector3.zero;
+
+		Vector2 MouseInput => Input.mousePosition;
 	}
 
 	public class Clockwise 

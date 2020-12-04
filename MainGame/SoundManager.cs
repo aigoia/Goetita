@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Game.MainGame
 {
@@ -7,34 +8,55 @@ namespace Game.MainGame
 	{
 		Sword, Gun, EnergyGun,
 	}
+
+	public enum SoundUi
+	{
+		Hover, Click
+	}
 	
 	public class SoundManager : MonoBehaviour
 	{
-		private static AudioClip _sword, _gun, _energyGun;
+		[Header("Sound")]
+		public AudioClip sword;
+		public AudioClip gun;
+		public AudioClip energyGun;
 		private static AudioSource _audioSource;
+
+		[Header("UI")] 
+		public AudioClip hover;
+		public AudioClip click;
+		
 
 		private void Awake()
 		{
-			_sword = Resources.Load<AudioClip>("Sword");
-			_gun = Resources.Load<AudioClip>("Gun");
-			_energyGun = Resources.Load<AudioClip>("EnergyGun");
-			
 			_audioSource = GetComponent<AudioSource>();
 		}
 
 		public void PlaySound(Sound sound)
 		{
-			if (sound == MainGame.Sound.Sword)
+			if (sound == Sound.Sword)
 			{
-				_audioSource.PlayOneShot(_sword);
+				_audioSource.PlayOneShot(sword);
 			}
-			else if (sound == MainGame.Sound.Gun)
+			else if (sound == Sound.Gun)
 			{
-				_audioSource.PlayOneShot(_gun);
+				_audioSource.PlayOneShot(gun);
 			}
-			else if (sound == MainGame.Sound.EnergyGun)
+			else if (sound == Sound.EnergyGun)
 			{
-				_audioSource.PlayOneShot(_energyGun);
+				_audioSource.PlayOneShot(energyGun);
+			}
+		}
+
+		public void PlayUi(SoundUi sound)
+		{
+			if (sound == SoundUi.Hover)
+			{
+				_audioSource.PlayOneShot(hover);
+			}
+			else if (sound == SoundUi.Click)
+			{
+				_audioSource.PlayOneShot(click);
 			}
 		}
 	}

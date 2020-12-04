@@ -15,7 +15,7 @@ namespace Game.MainGame
 
 		public void SettingIcon()
 		{
-			Invoke("MakeTrue", delay);
+			Invoke(nameof(MakeTrue), delay);
 		}
 
 		private void MakeTrue()

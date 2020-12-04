@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -10,7 +11,7 @@ namespace Game.MainGame
 		public UnityEvent menuOn;
 		private ModalManager _modalManager;
 		public GameManager gameManager;
-		
+
 		void Awake()
 		{
 			if (_modalManager == null) _modalManager = FindObjectOfType<ModalManager>();
@@ -43,30 +44,48 @@ namespace Game.MainGame
 
 		void TapController()
 		{
+			var tapList = new List<Player>();
+
+			foreach (var player in gameManager.activePlayerList)
+			{
+				if (player.currentVigor > 0)
+				{
+					tapList.Add(player);
+	            }
+			}
+			
 			if (gameManager.currentPlayer == null)
 			{
-				gameManager.SelectPlayer(gameManager.activePlayerList[0]);
+				
+				gameManager.SelectPlayer(tapList[0]);
 				print(gameManager.currentPlayer);
 				return;
+				
 			}
 
 			var i = 0;
 			var nextNumber = 1;
-			
+
 			foreach (var player in gameManager.activePlayerList)
 			{
-				player.activeNumber = i;
-				i++;
+				player.tapId = 0;
+			}
+			
 
+			foreach (var player in tapList)
+			{
+				player.tapId = i;
+				i++;
+				
 				if (gameManager.currentPlayer == player)
 				{
 					nextNumber = i;
 				}
 			}
 
-			gameManager.SelectPlayer(nextNumber < gameManager.activePlayerList.Count
-				? gameManager.activePlayerList[nextNumber]
-				: gameManager.activePlayerList[0]);
+			gameManager.SelectPlayer(nextNumber < tapList.Count
+				? tapList[nextNumber]
+				: tapList[0]);
 		}
 	}
 }

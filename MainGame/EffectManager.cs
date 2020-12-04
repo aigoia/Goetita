@@ -9,6 +9,7 @@ namespace Game.MainGame
 		public GameObject hitBlood;
 		public Vector3 particlePos = new Vector3 (0f, 1.5f, 0f);
 		public float particleRotation;
+		public Vector3 hitLineRotation = new Vector3(0, 0, 0);
 
 
 		public void SwordEffectEnemy(Player player, Enemy enemy)
@@ -20,7 +21,7 @@ namespace Game.MainGame
 			
 			var targetTransform = player.transform;
 			var position = targetTransform.position; 
-			Instantiate(hitLine, position +  particlePos, player.baseWeapon.transform.rotation);
+			Instantiate(hitLine, position +  particlePos, Quaternion.Euler(hitLineRotation));
 			Instantiate(hitParticles, position + particlePos, Quaternion.Euler(0, 0, particleRotation));
 			Instantiate(hitBlood, position + particlePos, targetTransform.localRotation, targetTransform);
 		}
@@ -46,7 +47,7 @@ namespace Game.MainGame
 			
 			var targetTransform = enemy.transform;
 			var position = targetTransform.position; 
-			Instantiate(hitLine, position +  particlePos, player.baseWeapon.transform.rotation);
+			Instantiate(hitLine, position +  particlePos, Quaternion.Euler(hitLineRotation));
 			Instantiate(hitParticles, position + particlePos, Quaternion.Euler(0, 0, particleRotation));
 			Instantiate(hitBlood, position + particlePos, targetTransform.localRotation, targetTransform);
 		}

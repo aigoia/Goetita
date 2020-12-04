@@ -27,8 +27,7 @@ namespace Game.MainGame
 			
 			foreach (var direction in GameUtility.Directions)
 			{
-				RaycastHit hit;
-				Physics.Raycast(enemy.transform.position, direction, out hit, GameUtility.interval);
+				Physics.Raycast(enemy.transform.position, direction, out var hit, GameUtility.interval);
 				
 				if (hit.transform == null) continue;
 				if (hit.transform.GetComponent<TileNode>().tileStyle == TileStyle.NonWalkable) continue;
@@ -64,8 +63,7 @@ namespace Game.MainGame
 			
 			foreach (var direction in GameUtility.Directions)
 			{
-				RaycastHit hit;
-				Physics.Raycast(player.transform.position, direction, out hit, GameUtility.interval);
+				Physics.Raycast(player.transform.position, direction, out var hit, GameUtility.interval);
 				
 				if (hit.transform == null) continue;
 				if (hit.transform.GetComponent<TileNode>() == null) continue;
@@ -81,11 +79,9 @@ namespace Game.MainGame
 		{
 			if (player == null) return false;
 			
-			
 			foreach (var direction in GameUtility.Directions)
 			{
-				RaycastHit hit;
-				Physics.Raycast(player.transform.position + Vector3.up, direction, out hit, GameUtility.interval);
+				Physics.Raycast(player.transform.position + Vector3.up, direction, out var hit, GameUtility.interval);
 				
 				if (hit.transform == null) continue;
 
@@ -103,23 +99,20 @@ namespace Game.MainGame
 		{
 			foreach (var enemyDirection in GameUtility.EightDirections)
 			{
-				RaycastHit hit;
-				if (Physics.Raycast(enemy.transform.position + Vector3.up, enemyDirection, out hit, GameUtility.interval * GameUtility.Alpha, LayerMask.GetMask("Player")))
+				if (Physics.Raycast(enemy.transform.position + Vector3.up, enemyDirection, out var hit, GameUtility.interval * GameUtility.Alpha, LayerMask.GetMask("Player")))
 				{
 					if (hit.transform == null) continue;
 					if (hit.transform.GetComponent<Player>().activeState == ActiveState.Dead) continue;
 					hit.transform.LookAt(enemy.transform);
 				}
 			}
-			
 		}
 		
 		public void Attention(Player player)
 		{
 			foreach (var enemyDirection in GameUtility.EightDirections)
 			{
-				RaycastHit hit;
-				if (Physics.Raycast(player.transform.position + Vector3.up, enemyDirection, out hit, GameUtility.interval * GameUtility.Alpha, LayerMask.GetMask("Enemy")))
+				if (Physics.Raycast(player.transform.position + Vector3.up, enemyDirection, out var hit, GameUtility.interval * GameUtility.Alpha, LayerMask.GetMask("Enemy")))
 				{
 					if (hit.transform == null) continue;
 					if (hit.transform.GetComponent<Enemy>().activeState == ActiveState.Dead) continue;
@@ -157,13 +150,16 @@ namespace Game.MainGame
 					{
 						if (player.marked > 0)
 						{
-							if (player.transform.position == node.transform.position) baseList.Add(player);
+							if (player.currentHp > 0 || player.activeState != ActiveState.Dead)
+							{
+								if (player.transform.position == node.transform.position) baseList.Add(player);
+							}
 						}
 					}
 //					baseList.Add(_gameManager.activePlayerList.Find(i => i.transform.position == node.transform.position && i.marked > 0));
 				}
 			}
-    
+			
 			return baseList;
 		}
 		
@@ -194,7 +190,10 @@ namespace Game.MainGame
 					{
 						if (player.marked > 0)
 						{
-							if (player.transform.position == node.transform.position) doubleList.Add(player);
+							if (player.currentHp > 0 || player.activeState != ActiveState.Dead)
+							{
+								if (player.transform.position == node.transform.position) doubleList.Add(player);
+							}
 						}
 					}
 				}
@@ -334,12 +333,14 @@ namespace Game.MainGame
 		{
 			if (player == null) return false;
 			if (enemy == null) return false;
+			if (player.activeState == ActiveState.Dead) return false;
+			if (player.copyHp <= 0) return false;
+			if (player.currentHp <= 0) return false;
 			
 			player.GetComponent<CapsuleCollider>().enabled = false;
 			enemy.GetComponent<CapsuleCollider>().enabled = false;
-			
-			RaycastHit hit;
-			if (Physics.Linecast(player.transform.position + Vector3.up, enemy.transform.position + Vector3.up, out hit,
+
+			if (Physics.Linecast(player.transform.position + Vector3.up, enemy.transform.position + Vector3.up, out _,
 				LayerMask.GetMask("Obstacle", "Player", "Enemy")))
 			{
 				player.GetComponent<CapsuleCollider>().enabled = true;
@@ -356,11 +357,13 @@ namespace Game.MainGame
 		{
 			if (player == null) return false;
 			if (tileNode == null) return false;
+			if (player.activeState == ActiveState.Dead) return false;
+			if (player.copyHp <= 0) return false;
+			if (player.currentHp <= 0) return false;
 		
 			player.GetComponent<CapsuleCollider>().enabled = false;
-			
-			RaycastHit hit;
-			if (Physics.Linecast(player.transform.position + Vector3.up, tileNode.transform.position + Vector3.up, out hit,
+
+			if (Physics.Linecast(player.transform.position + Vector3.up, tileNode.transform.position + Vector3.up, out var hit,
 				LayerMask.GetMask("Obstacle", "Player", "Enemy")))
 			{
 				player.GetComponent<CapsuleCollider>().enabled = true;
@@ -375,6 +378,9 @@ namespace Game.MainGame
 		{
 			if (player == null) return false;
 			if (tileNode == null) return false;
+			if (player.activeState == ActiveState.Dead) return false;
+			if (player.copyHp <= 0) return false;
+			if (player.currentHp <= 0) return false;
 			
 			if (_board.CheckObstacle(tileNode, player.transform.position)) return false;
 
@@ -386,9 +392,9 @@ namespace Game.MainGame
 		{
 			if (player == null) return false;
 			if (enemy == null) return false;
-			
-			RaycastHit hit;
-			if (Physics.Linecast(player.transform.position + Vector3.up, enemy.transform.position + Vector3.up, out hit,
+
+
+			if (Physics.Linecast(player.transform.position + Vector3.up, enemy.transform.position + Vector3.up, out _,
 				LayerMask.GetMask("Obstacle")))
 			{
 				return false;
@@ -400,15 +406,18 @@ namespace Game.MainGame
 		{
 			if (player == null) return false;
 			if (enemy == null) return false;
+			if (player.activeState == ActiveState.Dead) return false;
+			if (player.copyHp <= 0) return false;
+			if (player.currentHp <= 0) return false;
+
 
 			var distance = Vector3.Distance(player.transform.position + Vector3.up, enemy.transform.position + Vector3.up);
 			if (distance > range)
 			{
 				return false;
 			}
-			
-			RaycastHit hit;
-			if (Physics.Linecast(player.transform.position + Vector3.up, enemy.transform.position + Vector3.up, out hit,
+
+			if (Physics.Linecast(player.transform.position + Vector3.up, enemy.transform.position + Vector3.up, out _,
 				LayerMask.GetMask("Obstacle")))
 			{
 				return false;
@@ -420,9 +429,11 @@ namespace Game.MainGame
 		{
 			if (player == null) return false;
 			if (enemy == null) return false;
-			
-			RaycastHit hit;
-			if (Physics.Linecast(player.transform.position + Vector3.up, enemy.transform.position + Vector3.up, out hit,
+			if (player.activeState == ActiveState.Dead) return false;
+			if (player.copyHp <= 0) return false;
+			if (player.currentHp <= 0) return false;
+
+			if (Physics.Linecast(player.transform.position + Vector3.up, enemy.transform.position + Vector3.up, out _,
 				LayerMask.GetMask("Obstacle")))
 			{
 				return false;

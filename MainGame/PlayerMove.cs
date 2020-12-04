@@ -11,8 +11,8 @@ namespace Game.MainGame
         public bool isFollow = false;
         private readonly EaseType _baseMoveType = EaseType.linear ;
 
-        public float moveSpeed = 0.279f;
-        public float turnSpeed = 0.0279f;
+        public float moveSpeed = 0.28f;
+        public float turnSpeed = 0.0f;
 
         Player _player;
         Animator _animator;
@@ -28,7 +28,7 @@ namespace Game.MainGame
         {
             if (_board == null) _board = FindObjectOfType<Board>();
             if (_gameManager == null) _gameManager = FindObjectOfType<GameManager>();
-            if (_canvas == null) _canvas = _gameManager.GetComponent<UiManager>().canvas.GetComponent<MainCanvas>();
+            if (_canvas == null) _canvas = _gameManager.GetComponent<UIManager>().canvas.GetComponent<MainCanvas>();
             if (_player == null) _player = GetComponent<Player>();
             if (_cameraController == null) _cameraController = FindObjectOfType<CameraController>();
             if (_animator == null) _animator = GetComponent<Animator>();
@@ -90,6 +90,7 @@ namespace Game.MainGame
         void EndIndicator(bool skill)
         {
             _player.activeState = ActiveState.NotAnything;
+            if (_player.currentVigor <= 0) _player.turnState = TurnState.Ending;
 
             foreach (var item in _gameManager.activePlayerList)
             {

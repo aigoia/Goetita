@@ -32,6 +32,5 @@ namespace Game.MainGame
 				icon.GetComponent<IconManager>().SettingIcon();
 			}
 		}
-
 	}
 }

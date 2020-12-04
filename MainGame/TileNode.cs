@@ -175,6 +175,7 @@ namespace Game.MainGame
 				{
 					sign.transformDictionary [direction].position = transform.position;
 					sign.isSign = true;
+					_gameManager.soundManager.PlayUi(SoundUi.Hover);
 				}
 			}
 		}
@@ -392,7 +393,7 @@ namespace Game.MainGame
 			OutSign(_sword);
 		}
 
-		void OnMouseDown()
+		void OnMouseUp()
 		{
 			if (EventSystem.current.IsPointerOverGameObject()) return;
 			if (_gameManager.somethingOn) return;
@@ -428,14 +429,16 @@ namespace Game.MainGame
 			if (_gameManager.currentPlayer == null) return;
 			if (_board.startNode == null) return;
 			if (_board.currentWay == null) return;
-
+			
+			_gameManager.soundManager.PlayUi(SoundUi.Click);
+			
 			var roundTile = _board.NodeList.Find(i => i.Coordinate == GameUtility.Coordinate(_gameManager.round.transform.position));
 			
 			if (roundTile.tileStyle == TileStyle.OneArea || roundTile.tileStyle == TileStyle.TwoArea)
 			{
 				_gameManager.currentPlayer.MovingSkill(roundTile);
 				_gameManager.currentPlayer.playerMove.IndicateUnit(_board.currentWay, skill);
-				_board.currentWay = null;	
+				_board.currentWay = null;
 			}
 		}
 	}

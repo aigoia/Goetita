@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine.EventSystems;
+using UnityEngine.Serialization;
 
 namespace Game.MainGame
 {
@@ -15,12 +16,12 @@ namespace Game.MainGame
 
 	public enum GetHit
 	{
-		normal, GetHit
+		Normal, GetHit
 	}
 
 	public enum GiveHit
 	{
-		normal, GiveHit
+		Normal, GiveHit
 	}
 	
 	public enum TurnState 
@@ -37,7 +38,9 @@ namespace Game.MainGame
 		
 		[SerializeField] private float farFrom = 2f;
 
-		public int activeNumber;
+		public int tapId;
+		public int characterId;
+		public string characterName;
 		
 		public bool isClosed = true;
 		public bool canSelect = true;
@@ -56,13 +59,18 @@ namespace Game.MainGame
 
 		// HP
 		public int baseHp = 4;
-		public int currentHp;
+		public int currentHp = 4;
+		public int copyHp = 4;
 		public CharacterBar characterBar;
 		
+		// deal
+		public int weaponDeal = 4;
+		public int baseDeal = 0;
+		public int plusDeal = 1;
+		
 		private Enemy _currentEnemy;
-
 		public int baseVigor = 2;
-		public int currentVigor;
+		public int currentVigor = 2;
 
 		public GameObject moveBaseArea;
 		public GameObject moveBaseBlock;
@@ -85,12 +93,11 @@ namespace Game.MainGame
 		private SoundManager _soundManager;
 
 		Board _board;
-		public Weapon baseWeapon;
 
 		public TurnState turnState = TurnState.Waiting;
 		public ActiveState activeState = ActiveState.NotAnything;
 		public BeHit beHit = BeHit.Normal;
-		public GiveHit giveHit = GiveHit.normal;
+		public GiveHit giveHit = GiveHit.Normal;
 		
 		private static readonly int BaseAttack = Animator.StringToHash("BaseAttack");
 		private static readonly int Die = Animator.StringToHash("Die");
@@ -106,12 +113,13 @@ namespace Game.MainGame
 			if (_cameraController == null) _cameraController = FindObjectOfType<CameraController>();
 			currentVigor = baseVigor;
 			currentHp = baseHp;
+			copyHp = baseHp;
 			if (_gameManager == null) _gameManager = FindObjectOfType<GameManager>();
 			if (_soundManager == null) _soundManager = FindObjectOfType<SoundManager>();
 			if (playerMove == null) playerMove = GetComponent<PlayerMove>();
 			if (animator == null) animator = GetComponent<Animator>();
 			if (_playerUi == null) _playerUi = _gameManager.playerUi;
-			if (_canvas == null) _canvas = _gameManager.GetComponent<UiManager>().canvas.GetComponent<MainCanvas>();
+			if (_canvas == null) _canvas = _gameManager.GetComponent<UIManager>().canvas.GetComponent<MainCanvas>();
 
 			if (_utility == null) _utility = transform.Find("Utility");
 			if (moveBaseArea == null) moveBaseArea = _utility.Find("MoveBaseArea").gameObject;
@@ -125,7 +133,7 @@ namespace Game.MainGame
 			if (_model == null) _model = transform.Find("Model");
 			if (_tail == null) _tail = _utility.Find("Tail").gameObject;
 		}
-		
+
 		bool CheckBaseAttack()
 		{
 			if (characterType != CharacterType.SwordMaster) return false;
@@ -173,19 +181,18 @@ namespace Game.MainGame
 			{
 				return false;
 			}
-			
-			RaycastHit hit;
+
 			enemy.GetComponent<CapsuleCollider>().enabled = false;
-			if (Physics.Linecast(transform.position + Vector3.up, enemy.transform.position + Vector3.up, out hit,
+			if (Physics.Linecast(transform.position + Vector3.up, enemy.transform.position + Vector3.up, out _,
 				LayerMask.GetMask("Obstacle", "Player", "Enemy")))
 			{
 				enemy.GetComponent<CapsuleCollider>().enabled = true;
-				return true;
+				return false;
 			}
 			enemy.GetComponent<CapsuleCollider>().enabled = true;
 			
 			RangeSingleOn(enemy);
-			return false;
+			return true;
 		}
 
 		public List<Enemy> RangeAttackList(Vector3 position)
@@ -199,15 +206,16 @@ namespace Game.MainGame
 			
 			foreach (var enemy in areaEnemyList)
 			{
+				if (enemy == null) continue;
+				
 				if (enemy.activeState == ActiveState.Dead)
 				{
 					_gameManager.activeEnemyList.Remove(enemy);
 					continue;
 				}
-				
-				RaycastHit hit;
+
 				enemy.GetComponent<CapsuleCollider>().enabled = false;
-				if (Physics.Linecast(position + Vector3.up, enemy.transform.position + Vector3.up, out hit,
+				if (Physics.Linecast(position + Vector3.up, enemy.transform.position + Vector3.up, out _,
 					LayerMask.GetMask("Obstacle", "Player", "Enemy")))
 				{
 					enemy.GetComponent<CapsuleCollider>().enabled = true;
@@ -224,18 +232,10 @@ namespace Game.MainGame
 
 		void RangeSingleOn(Enemy enemy)
 		{
-			if (_cameraController.rangeLevel == 0 || _cameraController.rangeLevel == 1)
-			{
-				enemy.characterBar.rangeDown.SetActive(true);
-			}
-			else if (_cameraController.rangeLevel == 2)
-			{
-				enemy.characterBar.rangeUp.SetActive(true);
-			}
-            
+			enemy.range.SetActive(true);
 			enemy.canTargeted = true;
 		}
-
+		
 		void RangeOn(List<Enemy> enemies)
 		{
 			if (_gameManager.somethingOn) return;
@@ -246,15 +246,7 @@ namespace Game.MainGame
 				if (enemy.GetComponent<CapsuleCollider>().enabled == false) continue;
 				if (enemy.currentHp <= 0) continue;
 				
-				if (_cameraController.rangeLevel == 0 || _cameraController.rangeLevel == 1)
-				{
-					enemy.characterBar.rangeDown.SetActive(true);
-				}
-				else if (_cameraController.rangeLevel == 2)
-				{
-					enemy.characterBar.rangeUp.SetActive(true);
-				}
-
+				enemy.range.SetActive(true);
 				enemy.canTargeted = true;
 			}
 		}
@@ -263,8 +255,7 @@ namespace Game.MainGame
 		{
 			foreach (var enemy in enemies)
 			{
-				enemy.characterBar.rangeDown.SetActive(false);
-				enemy.characterBar.rangeUp.SetActive(false);
+				enemy.range.SetActive(false);
 			}
 		}
 
@@ -289,8 +280,7 @@ namespace Game.MainGame
 			
 			foreach (var node in testEnemy.baseRangeArea)
 			{
-				RaycastHit hit;
-				if (Physics.Linecast(node.transform.position, testEnemy.transform.position, out hit,
+				if (Physics.Linecast(node.transform.position, testEnemy.transform.position, out _,
 					LayerMask.GetMask(("Obstacle"))))
 				{
 					
@@ -341,8 +331,7 @@ namespace Game.MainGame
 
 			foreach (var enemyDirection in GameUtility.EightDirections)
 			{
-				RaycastHit hit;
-				if (Physics.Raycast(transform.position + Vector3.up, enemyDirection, out hit, GameUtility.interval * GameUtility.Alpha, LayerMask.GetMask("Enemy")))
+				if (Physics.Raycast(transform.position + Vector3.up, enemyDirection, out var hit, GameUtility.interval * GameUtility.Alpha, LayerMask.GetMask("Enemy")))
 				{
 					if (hit.transform == null) continue;
 					if (hit.transform.GetComponent<Enemy>().activeState == ActiveState.Dead) continue;
@@ -408,7 +397,13 @@ namespace Game.MainGame
 		IEnumerator CloseSelectEnemy(List<Enemy> currentEnemyList, float farFrom = 2f)
 		{
 			StartAllEnemy();
-		
+
+			if (currentEnemyList == null)
+			{
+				CheckPlayerTurn();
+				yield break;
+			}
+				
 			GameUtility.ShuffleList(currentEnemyList);
 			var enemy = currentEnemyList[0];
 			
@@ -447,6 +442,7 @@ namespace Game.MainGame
 
 		IEnumerator WaitCloseSkill(Enemy enemy, float farFromCharacter)
 		{
+			Damage(enemy);
 			enemy.GetComponent<CapsuleCollider>().enabled = false; 
 			_gameManager.somethingOn = true;             
 			enemy.getHit = GetHit.GetHit;
@@ -482,9 +478,9 @@ namespace Game.MainGame
 			
 			_gameManager.effectManager.SwordEffectPlayer(enemy, this);
 			_soundManager.PlaySound(Sound.Sword);
-			Damage(enemy);
+			
 			CheckDead(enemy);
-			giveHit = GiveHit.normal;
+			giveHit = GiveHit.Normal;
 			
 			while (!enemy.animator.GetCurrentAnimatorStateInfo(0).IsTag ("Hit"))
 			{
@@ -503,11 +499,13 @@ namespace Game.MainGame
 				AfterDead(enemy);
 			}
 			
-			enemy.getHit = GetHit.normal;
+			enemy.getHit = GetHit.Normal;
+			turnState = TurnState.Ending;
 		}
 		
 		IEnumerator WaitRangeSkill(Enemy enemy)
 		{
+			Damage(enemy);
 			CloseCamera();
 			
 			animator.SetTrigger(RangeAttack);
@@ -519,15 +517,14 @@ namespace Game.MainGame
 			_gameManager.somethingOn = true;
 
 			enemy.getHit = GetHit.GetHit;
-			giveHit = GiveHit.normal;
+			giveHit = GiveHit.Normal;
 
 			while (_gameManager.swordMin > animator.GetCurrentAnimatorStateInfo(0).normalizedTime ||
 			       animator.GetCurrentAnimatorStateInfo(0).normalizedTime >_gameManager.rangeMax)
 			{
 				yield return null;
 			}
-			
-			_soundManager.PlaySound(Sound.EnergyGun);
+			_soundManager.PlaySound(Sound.Gun);
 			
 			while (animator.GetCurrentAnimatorStateInfo(0).normalizedTime < _gameManager.rangeHit)
 			{
@@ -535,9 +532,9 @@ namespace Game.MainGame
 			}
 			
 			_gameManager.effectManager.RangeEffectPlayer(enemy, this);
-			Damage(enemy);
+			
 			CheckDead(enemy);
-			giveHit = GiveHit.normal;
+			giveHit = GiveHit.Normal;
 			
 			var victory = _gameManager.CheckVictory();
 
@@ -566,17 +563,11 @@ namespace Game.MainGame
 				AfterDead(enemy);
 			}
 			
-			enemy.getHit = GetHit.normal;
+			enemy.getHit = GetHit.Normal;
+			turnState = TurnState.Ending;
 			if (!victory) CheckPlayerTurn();
 		}
-
-		void Damage(Enemy enemy)
-		{
-			var damage = (int) Random.Range (baseWeapon.damageMin, baseWeapon.damageMax +1);
-			enemy.currentHp = enemy.currentHp - damage;
-			enemy.characterBar.Fill(enemy);
-		}
-
+		
 		public void MovingSkill( TileNode clickedTile = null)
 		{
 			if (clickedTile == null) return;
@@ -625,6 +616,18 @@ namespace Game.MainGame
 			transform.LookAt(enemy.transform);
 			StartCoroutine(WaitRangeSkill(enemy));
 		}
+		
+		void Damage(Enemy enemy)
+		{
+			var damage = (int) Random.Range(weaponDeal, weaponDeal + plusDeal) + baseDeal;
+			enemy.currentHp = enemy.currentHp - damage;
+			enemy.characterBar.Fill(enemy);
+
+			if (enemy.currentHp <= 0)
+			{
+				_gameManager.activeEnemyList.Remove(enemy);
+			}
+		}
 
 		void CheckDead(Enemy enemy)
 		{
@@ -635,7 +638,7 @@ namespace Game.MainGame
 				enemy.GetComponent<CapsuleCollider>().center = Vector3.zero;
 				enemy.GetComponent<CapsuleCollider>().height = deadHeight;
 				enemy.GetComponent<CapsuleCollider>().enabled = false;
-				_gameManager.activeEnemyList.Remove(enemy);
+				
 			}
 			else
 			{
@@ -654,8 +657,13 @@ namespace Game.MainGame
 			iTween.MoveTo(enemy.gameObject, new Vector3(position.x, GameUtility.Disappear, position.z), GameUtility.DisappearTime);
 		}
 
-		void OnMouseDown()
+		void OnMouseUp()
 		{
+			foreach (var player in _gameManager.playerList)
+            {
+            	player.round.SetActive(false);
+            }
+			
 			if (EventSystem.current.IsPointerOverGameObject()) return;
 			if (canSelect == false) return;
 			if (_gameManager.somethingOn == true) return;
@@ -673,6 +681,7 @@ namespace Game.MainGame
 			
 			if (turnState == TurnState.Waiting && currentVigor > 0 )
 			{
+				_soundManager.PlayUi(SoundUi.Click);
 				_gameManager.SelectPlayer(this);
 			}
 		}

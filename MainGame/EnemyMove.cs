@@ -62,6 +62,12 @@ namespace Game.MainGame
             {
                 spendVigor = _enemy.enemyAi.halfVigor;
             }
+
+            // if (_enemy.cube != null)
+            // {
+            //     _enemy.cube.transform.position = GameUtility.CoordinateToTransform(way[0].Coordinate); 
+            // }
+            //
             way.Reverse();
             StartCoroutine(Indicator(MakeTransform (way), spendVigor, walkOrder));
         }
@@ -106,7 +112,6 @@ namespace Game.MainGame
             _enemy.activeState = ActiveState.NotAnything;
             _gameManager.Marked();
             _enemy.currentVigor -= spendVigor;
-            
         }
 
         IEnumerator MoveRoutine(Vector3 destinationPos, float delayTime) 

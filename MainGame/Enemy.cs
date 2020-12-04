@@ -19,12 +19,19 @@ namespace Game.MainGame
 	
 	public class Enemy : MonoBehaviour
 	{
+		public bool battle = false;
+
 		// HP
 		public int baseHp = 4;
-		public int currentHp;
+		public int currentHp = 4;
+		
 		public CharacterBar characterBar;
+		public GameObject range;
 
-		public Weapon baseWeapon;
+		// deal
+		public int baseDeal = 4;
+		public int plusDeal = 1;
+		
 		public int baseVigor = 2;
 		public int currentVigor = 2;
 		[SerializeField] private float alpha = 1f;
@@ -43,7 +50,7 @@ namespace Game.MainGame
 		private SoundManager _soundManager;
 		public Vector3 direction;
 		Transform _model;
-
+		
 		public bool noWay = false;
 
 		public GameObject moveBaseArea;
@@ -53,7 +60,7 @@ namespace Game.MainGame
 
 		public TurnState turnState = TurnState.Waiting;
 		public ActiveState activeState = ActiveState.NotAnything;
-		public GetHit getHit = GetHit.normal;
+		public GetHit getHit = GetHit.Normal;
 		public BuyHit buyHit = BuyHit.Normal;
 
 		private static readonly int BaseAttack = Animator.StringToHash("BaseAttack");
@@ -74,6 +81,7 @@ namespace Game.MainGame
 			if (moveBaseArea == null) moveBaseArea = transform.Find("Utility").Find("MoveBaseArea").gameObject;
 			if (moveDoubleArea == null) moveDoubleArea = transform.Find("Utility").Find("MoveDoubleArea").gameObject;
 			if (_model == null) _model = transform.Find("Model");
+			if (range == null) range = moveBaseArea = transform.Find("Utility").Find("Range").gameObject;
 		}
 
 		public bool UnitWalk(AreaOrder areaOrder, WalkOrder walkOrder, TileNode endNode)
@@ -158,17 +166,27 @@ namespace Game.MainGame
 			player.beHit = BeHit.Normal;
 			StartCoroutine(WaitRangeSkill(player));
 		}
+
+		void DamageCopy(Player player)
+		{
+			var damage = (int)Random.Range(baseDeal, baseDeal + plusDeal);
+			player.copyHp = player.copyHp - damage;
+			
+			player.characterBar.Fill(player, player.copyHp);
+		}
 		
 		void CheckDead(Player player)
 		{
-			if (player.currentHp <= 0)
+			print("Copy HP : " + player.copyHp);
+			print("Current HP : " + player.currentHp);
+			
+			if (player.copyHp <= 0)
 			{
-				player.animator.SetTrigger(Die);
 				player.activeState = ActiveState.Dead;
+				player.animator.SetTrigger(Die);
 				player.GetComponent<CapsuleCollider>().center = Vector3.zero;
 				player.GetComponent<CapsuleCollider>().height = deadHeight;
 				player.GetComponent<CapsuleCollider>().enabled = false;
-				_gameManager.activePlayerList.Remove(player);
 			}
 			else
 			{
@@ -180,15 +198,30 @@ namespace Game.MainGame
 			_gameManager.areaCheck.Attention(this);
 		}
 		
-		void Damage(Player player)
+		public void Damage(Player player)
 		{
-			var damage = (int)Random.Range(baseWeapon.damageMin, baseWeapon.damageMax +1);
+			var damage = (int)Random.Range(baseDeal, baseDeal + plusDeal);
 			player.currentHp = player.currentHp - damage;
-			player.characterBar.Fill(player);
+			
+			if (player.currentHp <= 0)
+			{
+				var newList = new List<Player>();
+				
+				foreach (var unit in _gameManager.activePlayerList)
+				{
+					if (unit.name != player.name)
+					{
+						newList.Add(unit);
+					}
+				}
+				
+				_gameManager.activePlayerList = newList;
+			}
 		}
 		
 		IEnumerator WaitCloseSkill(Player player, float farFrom)
 		{
+			battle = true;
 			_model.position = transform.position;
 
 			if (player.direction == Vector3.forward ||
@@ -224,7 +257,8 @@ namespace Game.MainGame
 			
 			_gameManager.effectManager.SwordEffectEnemy(player, this);
 			_soundManager.PlaySound(Sound.Sword);
-			Damage(player);
+			
+			DamageCopy(player);
 			CheckDead(player);
 			buyHit = BuyHit.Normal;
 
@@ -242,6 +276,7 @@ namespace Game.MainGame
 
 			_model.position = transform.position;
 			player.beHit = BeHit.Normal;
+			battle = false;
 			if (player.activeState == ActiveState.Dead)
 			{
 				AfterDead(player);
@@ -250,6 +285,9 @@ namespace Game.MainGame
 
 		IEnumerator WaitRangeSkill(Player player)
 		{
+			battle = true;
+			// Damage(player);
+			
 			transform.LookAt(player.transform);
 			animator.SetTrigger(RangeAttack);
 			while (!animator.GetCurrentAnimatorStateInfo(0).IsTag ("Range"))
@@ -266,7 +304,7 @@ namespace Game.MainGame
 				yield return null;
 			}
 			
-			_soundManager.PlaySound(Sound.EnergyGun);
+			_soundManager.PlaySound(Sound.Gun);
 			
 			while (animator.GetCurrentAnimatorStateInfo(0).normalizedTime < _gameManager.rangeHit)
 			{
@@ -274,9 +312,10 @@ namespace Game.MainGame
 			}
 			
 			_gameManager.effectManager.RangeEffectEnemy(player, this);
-			Damage(player);
-			CheckDead(player);
 			
+			DamageCopy(player);
+			CheckDead(player);
+
 			while (!player.animator.GetCurrentAnimatorStateInfo(0).IsTag ("Hit"))
 			{
 				yield return null;
@@ -292,16 +331,35 @@ namespace Game.MainGame
 			if (player.activeState != ActiveState.Dead) player.GetComponent<CapsuleCollider>().enabled = true;
 				
 			player.beHit = BeHit.Normal;
+			battle = false;
 			if (player.activeState == ActiveState.Dead)
 			{
 				AfterDead(player);
 			}
 		}
-		
+
+		public void RenewalPlayerList()
+		{
+			var newList = new List<Player>();
+			
+			foreach (var player in _gameManager.activePlayerList)
+            {
+            	if (player.activeState != ActiveState.Dead || player.currentHp <= 0)
+            	{
+            		newList.Add(player);
+            	}
+            }
+			
+			_gameManager.activePlayerList = newList;
+		}
+
 		void AfterDead(Player player)
 		{
 			player.characterBar.gameObject.SetActive(false);
 			var position = player.transform.position;
+
+			RenewalPlayerList();
+			
 			iTween.MoveTo(player.gameObject, new Vector3(position.x, GameUtility.Disappear, position.z), GameUtility.DisappearTime);
 		}
 
@@ -313,7 +371,7 @@ namespace Game.MainGame
 				return false;
 			}
 			
-			var enemy = enemyAi.currentEnemy;
+			var enemy = enemyAi.thisEnemy;
 			if (enemy == null) 
 			{
 				print("Enemy : " + enemy);
@@ -333,17 +391,37 @@ namespace Game.MainGame
 				return false;
 			}
 
-			enemy.enemyMove.IndicateUnit(way, areaOrder, walkOrder);
+			if (_cameraController.cameraZoomOut == 15)
+			{
+				enemy.transform.position = way[0].transform.position;
+				return true;
+			}
+			
+			if (Vector3.Distance(_cameraController.transform.position, way[0].transform.position) < _cameraController.area)
+			{ 
+				enemy.enemyMove.IndicateUnit(way, areaOrder, walkOrder);	
+			}
+			else if (Vector3.Distance(_cameraController.transform.position, this.transform.position) < _cameraController.area)
+			{
+				enemy.enemyMove.IndicateUnit(way, areaOrder, walkOrder);	
+			}
+				
+			else
+			{
+				enemy.transform.position = way[0].transform.position;
+			}
+			
 			return true;
 		}
 
 		void AttackRangeByPlayer(Enemy enemy)
 		{
 			if (_gameManager.currentPlayer.characterType != CharacterType.Ranger) return;
-			if (_gameManager.currentPlayer.CheckRangeSingle(enemy, _gameManager.currentPlayer)) return;
+			if (!_gameManager.currentPlayer.CheckRangeSingle(enemy, _gameManager.currentPlayer)) return;
 
 			if (enemy.canTargeted && _gameManager.currentPlayer.currentVigor > 0)
 			{
+				_soundManager.PlayUi(SoundUi.Click);
 				_gameManager.currentPlayer.StartRangeAttack(enemy);
 			}
 		}
@@ -356,10 +434,15 @@ namespace Game.MainGame
 			if (_gameManager.somethingOn) return;
 
 			_gameManager.PathSetting(false);
-			_gameManager.currentPlayer.CheckRangeSingle(this, _gameManager.currentPlayer);
+			var hover = _gameManager.currentPlayer.CheckRangeSingle(this, _gameManager.currentPlayer);
+			
+			if (hover)
+			{
+				_soundManager.PlayUi(SoundUi.Hover);
+			}
 		}
 
-		void OnMouseDown()
+		void OnMouseUp()
 		{
 			if (EventSystem.current.IsPointerOverGameObject()) return;
 			if (_gameManager.currentPlayer == null) return;

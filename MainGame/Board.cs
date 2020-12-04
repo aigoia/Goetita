@@ -20,14 +20,17 @@ namespace Game.MainGame
         public readonly Vector3 Box = new Vector3(1f, 1f, 1f);
 
         List<TileNode> _nodeList;
-        public List<TileNode> NodeList{ get {return _nodeList;} }
+        public List<TileNode> NodeList => _nodeList;
 
         public LineRenderer line;
         public Vector3 lineVector = new Vector3(0, 0.03f, 0);
-        public readonly Vector2 boardSize = new Vector2(40f, 40f);
+
+        [SerializeField] private static int xSize = 32;
+        [SerializeField] private static int ySize = 32;
+        public Vector2 boardSize = new Vector2(xSize, ySize);
 
         PathFinding _pathFinding;
-        public PathFinding PathFinding{ get {return _pathFinding;} }
+        public PathFinding PathFinding => _pathFinding;
 
         GameManager _gameManager;
         EnemyAi _enemyAi;

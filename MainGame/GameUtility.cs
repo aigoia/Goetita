@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Game.Data;
 using UnityEngine;
 
 namespace Game.MainGame
@@ -120,8 +121,14 @@ namespace Game.MainGame
             }
         }
         
+        public static void PrintList(List<Character> list)
+        {
+            foreach (var item in list)
+            {
+                print(item.CharacterName + "(" + item.CharacterId + ")");
+            }
+        }
         
-
         public static List<int> RandomExtraction(int count, int cut)
         {
             var newList = new List<int>();

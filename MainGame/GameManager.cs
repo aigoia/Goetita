@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Game.Data;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
@@ -22,16 +23,20 @@ namespace Game.MainGame
 		public Turn turnState;
 		public Player currentPlayer;
 		
-		List<Player> _playerList;
+		public List<Player> playerList;
 		public List<Player> activePlayerList = new List<Player>();
 		List<Enemy> _enemyList;
 		public List<Enemy> activeEnemyList = new List<Enemy>();
 		List<TileNode> _closeCombatList;
-		List<Weapon> _weaponList;
 		public GameObject holder;
 		public GameObject milestone;
+		WaitForSeconds wait = new WaitForSeconds(1.5f);
 		
 		public EffectManager effectManager;
+		public SoundManager soundManager;
+		public PlayerData playerData;
+		
+		public int turnTime = 0;
 		
 		// game setting
 		public bool doubleClose = true;
@@ -70,16 +75,17 @@ namespace Game.MainGame
 		public GameObject testObjectB;
 		public GameObject testObjectC;
 		MainCanvas _mainCanvas;
-		
+
 		public AreaCheck areaCheck;
 		public Common common;
 
 		public float visionRange = 24f;
 		public WaitForSeconds waitClose = new WaitForSeconds(1.6f);
 
+		public Settings settings;
 		public UnityEvent gameOver;
 		public UnityEvent victory;
-		
+
 		void Awake()
 		{
 			if (_mainCanvas == null) _mainCanvas = FindObjectOfType<MainCanvas>();
@@ -90,15 +96,17 @@ namespace Game.MainGame
 			if (close == null) close = transform.Find("Close");
 			if (_cameraController == null)_cameraController = FindObjectOfType<CameraController>();
 			if (_board == null) _board = FindObjectOfType<Board>();
-			_playerList = new List<Player>(FindObjectsOfType<Player>());
-			MakeActivePlayerList(_playerList, activePlayerList);
+			// playerList = new List<Player>(FindObjectsOfType<Player>());
+			// MakeActivePlayerList(playerList, activePlayerList);
 			_enemyList = new List<Enemy>(FindObjectsOfType<Enemy>());
 			if (enemyAi == null) enemyAi = FindObjectOfType<EnemyAi>();
 			MakeActiveEnemyList(_enemyList, activeEnemyList);
-			_weaponList = new List<Weapon>(FindObjectsOfType<Weapon>());
 			if (effectManager == null) effectManager = GetComponent<EffectManager>();
+			if (soundManager == null) soundManager = FindObjectOfType<SoundManager>();
 			if (areaCheck == null) areaCheck = GetComponent<AreaCheck>();
 			if (milestone == null) milestone = transform.Find("Milestone").gameObject;
+			if (playerData == null) playerData = transform.Find("PlayerUnit").GetComponent<PlayerData>();
+			if (settings == null) settings = FindObjectOfType<Settings>();
 		}
 
 		private void Start()
@@ -110,7 +118,7 @@ namespace Game.MainGame
 		{
 			foreach (var enemy in activeEnemyList)
 			{
-				foreach (var player in _playerList)
+				foreach (var player in playerList)
 				{
 					if (areaCheck.CanSee(player, enemy, visionRange))
 					{
@@ -133,6 +141,37 @@ namespace Game.MainGame
 		{
 			SceneManager.LoadScene("Menu");
 		}
+		
+		public void GotoWindow()
+		{
+			SaveCharacter();
+			SceneManager.LoadScene("Window");
+		}
+
+		void SaveCharacter()
+		{
+			foreach (var player in activePlayerList)
+			{
+				player.currentHp = player.copyHp;
+			}
+			
+			var characters = ES3.Load<List<Character>>("Characters", "Game");
+
+			foreach (var character in characters)
+			{
+				// if character didn't attend battle, keep their hp
+				character.CurrentHp = 0;
+			}
+			
+			foreach (var player in activePlayerList)
+			{
+				characters.Find(i => i.CharacterId == player.characterId).CurrentHp = player.currentHp;
+				
+			}
+			
+			ES3.Save<List<Character>>("Characters", characters, "Game");
+		}
+
 
 		void CloseAttack()
 		{
@@ -145,16 +184,18 @@ namespace Game.MainGame
 					currentPlayer.CloseOn();
 				}
 			}
-			
 		}
-		
-		private void MakeActivePlayerList(List<Player> players, List<Player> activePlayers)
+
+		public void MakeActivePlayerList(List<Player> players, List<Player> activePlayers)
 		{
 			foreach (var unit in players)
 			{
 				if (unit.gameObject.activeSelf == true && unit.activeState != ActiveState.Dead)
 				{
-					activePlayers.Add(unit);
+					if (unit.currentHp > 0 && unit.baseHp > 0)
+					{
+						activePlayers.Add(unit);
+					}
 				}
 			}
 		}
@@ -177,12 +218,31 @@ namespace Game.MainGame
 
 		public void NextPlayer()
 		{
+			var checkVictory = CheckVictory();
+			if (checkVictory == true) return;
+
+			foreach (var player in playerList)
+			{
+				player.round.SetActive(false);
+			}
+			
 			currentPlayer = null;
 
 			foreach (var player in activePlayerList)
 			{
+				// print(player.activeState);
+				// print(player.currentHp);
+				
 				if (player.activeState == ActiveState.Dead) continue;
+				if (player.currentHp <= 0) continue;
+				if (player.baseVigor <= 0)
+				{
+					player.turnState = TurnState.Ending;
+					continue;
+				}
 
+				if (player.transform.position.y < 0) continue;
+				
 				if (player.turnState != TurnState.Ending)
 				{
 					currentPlayer = player;
@@ -190,6 +250,9 @@ namespace Game.MainGame
 					return;
 				}
 			}
+
+			print("No one");
+			PlayerTurnEnding();
 		}
 
 		public void PathSetting(bool setting)
@@ -243,6 +306,7 @@ namespace Game.MainGame
 			if (activePlayerList.Count == 0)
 			{
 				print("Game Over");
+				settings.ResetAll();
 				StartCoroutine(WaitPlayerEnding());
 				return true;
 			}
@@ -267,6 +331,7 @@ namespace Game.MainGame
 			if (activeEnemyList.Count == 0)
 			{
 				print("Victory");
+				// playerData.WinReword(200, 9);
 				return true;
 			}
 
@@ -288,12 +353,14 @@ namespace Game.MainGame
 		
 		IEnumerator WaitPlayerEnding()
 		{
-			foreach (var player in _playerList)
+			WaitForSeconds wait;
+			
+			foreach (var player in playerList)
 			{
 				while (player.beHit == BeHit.BeHit)
 				{
 					yield return null;
-				}				
+				}
 			}
 
 			gameOver.Invoke();
@@ -301,21 +368,38 @@ namespace Game.MainGame
 		
 		public void EnemyTurnEnding()
 		{
-			activeEnemyList.ForEach(i => i.getHit = GetHit.normal);
-			activePlayerList.ForEach(i => i.giveHit = GiveHit.normal);
+			activeEnemyList.ForEach(i => i.getHit = GetHit.Normal);
+			activePlayerList.ForEach(i => i.giveHit = GiveHit.Normal);
+
+			foreach (var player in playerList)
+			{
+				player.currentHp = player.copyHp;
+				
+				if (player.currentHp > 0)
+				{
+					if (!activePlayerList.Contains(player))
+					{
+						activePlayerList.Add(player);
+						player.activeState = ActiveState.NotAnything;
+						player.turnState = TurnState.Waiting;
+					}
+				}
+			}
 			
 			foreach (var player in activePlayerList)
 			{
 				if (player.marked > 0) player.marked = player.marked - 1;
 			}
-
+            
 			turnState = Turn.PlayerTurn;
 			print("PlayerTurn");
-		
+            		
 			// if you put fog, you'll change this
-			enemyAi.currentEnemy = null;
+			enemyAi.thisEnemy = null;
 			_mainCanvas.enemyTurnText.SetActive(false);
-		
+			
+			// CubeOff();
+			
 			if (activePlayerList.Count > 0)
 			{
 				foreach (var player in activePlayerList)
@@ -323,11 +407,11 @@ namespace Game.MainGame
 					player.currentVigor = player.baseVigor;
 					player.turnState = TurnState.Waiting;
 				}
-				
+            				
 				NextPlayer();
 			}
 		}
-
+		
 		public void PlayerTurnEnding()
 		{
 			if (currentPlayer == null) return;
@@ -355,6 +439,7 @@ namespace Game.MainGame
 			}
 			else
 			{
+				turnTime = turnTime + 1;
 				EnemyTurnStart();
 			}
 		}

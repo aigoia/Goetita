@@ -15,37 +15,41 @@ namespace Game.MainGame
 		[SerializeField] private int bonus = 2;
 		[SerializeField] GameObject blockObject;
 		GameManager _gameManager;
-		public GameObject rangeDown;
-		public GameObject rangeUp;
 
 		void Start()
 		{
 			if (_gameManager == null) _gameManager = FindObjectOfType<GameManager>();
 			if (_block == null) _block = transform.Find("Block");
 			if (healthBar == null) healthBar = transform.Find("HP").GetComponent<Image>();
-			if (rangeDown == null) rangeDown = transform.Find("RangeDown").gameObject;
-			if (rangeUp == null) rangeUp = transform.Find("RangeUp").gameObject;
+
 			
 			if (player != null)
 			{
+				float currentHp = player.currentHp;
+				float baseHP = player.baseHp;
+				
 				// ReSharper disable once PossibleLossOfFraction
-				healthBar.fillAmount = player.currentHp / player.baseHp;
+				healthBar.fillAmount = currentHp / baseHP;
 				_thisWidth = GetComponent<RectTransform>().rect.width;
-				_oneBlockPos = _thisWidth / player.baseHp;
-				_neededBlock = (int) player.baseHp;
+				_oneBlockPos = _thisWidth / baseHP;
+				_neededBlock = (int) baseHP;
 				MakeBlock(player);
 			}
 			
 			if (enemy != null)
 			{
+				float currentHp = enemy.currentHp;
+				float baseHP = enemy.baseHp;
+				
 				// ReSharper disable once PossibleLossOfFraction
-				healthBar.fillAmount = enemy.currentHp / enemy.baseHp;
+				healthBar.fillAmount = currentHp / baseHP;
 				_thisWidth = GetComponent<RectTransform>().rect.width;
-				_oneBlockPos = _thisWidth / enemy.baseHp;
-				_neededBlock = (int) enemy.baseHp;
+				_oneBlockPos = _thisWidth / baseHP;
+				_neededBlock = (int) baseHP;
 				MakeBlock(enemy);
 			}
 		}
+		
 
 		void MakeBlock(Player thisPlayer)
 		{
@@ -67,9 +71,9 @@ namespace Game.MainGame
 			}
 		}
 	
-		public void Fill(Player thisPlayer)
+		public void Fill(Player thisPlayer, int hp)
 		{
-			float value = (float) thisPlayer.currentHp / (float) thisPlayer.baseHp;
+			float value = (float) hp / (float) thisPlayer.baseHp;
 			healthBar.fillAmount = value;
 		}
 		

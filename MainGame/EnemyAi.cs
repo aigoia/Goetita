@@ -21,7 +21,7 @@ namespace Game.MainGame
         Board _board;
         GameManager _gameManager;
         private AreaCheck _areaCheck;
-        public Enemy currentEnemy;
+        public Enemy thisEnemy;
 
         private readonly int _nCount = -1; 
         readonly int emptyCount = 0;
@@ -43,30 +43,41 @@ namespace Game.MainGame
             
             print(this +" is ready");
             _gameManager.Marked();
-            
+
             StartCoroutine(StartEnemies());
+            StartCoroutine(ForcedEnding());
+        }
+
+        IEnumerator ForcedEnding()
+        {
+            var count = _gameManager.activeEnemyList.Count;
+            var wait = new WaitForSeconds(15f * count);
+            
+            yield return wait;
+            _gameManager.EnemyTurnEnding();
         }
 
         List<Enemy> MakeEndList()
         {
             var endList = new List<Enemy>();
             
-            foreach (var thisEnemy in _gameManager.activeEnemyList)
+            foreach (var enemy in _gameManager.activeEnemyList)
             {
-                if (thisEnemy.turnState == TurnState.Ending) endList.Add(thisEnemy);    
+                if (enemy == null) continue;
+                if (enemy.turnState == TurnState.Ending) endList.Add(enemy);    
             }
 
             return endList;
         }
 
-        void RandomBase(Enemy thisEnemy)
+        void RandomBase(Enemy enemy)
         {
-            if (thisEnemy.currentVigor == emptyVigor) return;
+            if (enemy.currentVigor == emptyVigor) return;
             
-            if (thisEnemy.currentVigor >= halfVigor)
+            if (enemy.currentVigor >= halfVigor)
             {
-                var otherWalk = thisEnemy.UnitWalk(AreaOrder.Base, WalkOrder.Random, null);
-                if (otherWalk) thisEnemy.currentVigor = emptyVigor;
+                var otherWalk = enemy.UnitWalk(AreaOrder.Base, WalkOrder.Random, null);
+                if (otherWalk) enemy.currentVigor = emptyVigor;
             }
         }
 
@@ -74,6 +85,8 @@ namespace Game.MainGame
         {
             foreach (var player in _gameManager.activePlayerList)
             {
+                if (player == null) continue;
+
                 if (player.marked >= 1)
                 {
                     return true;
@@ -83,27 +96,32 @@ namespace Game.MainGame
             return false;
         }
 
-        void GoNear(Enemy thisEnemy)
+        void GoNear(Enemy enemy)
         {
             if (!CheckMarked()) return;
-            if (thisEnemy.currentVigor == emptyVigor) return;
+            if (enemy.currentVigor == emptyVigor) return;
             
              var endingEnemyList = MakeEndList();
                                     
              foreach (var endingEnemy in endingEnemyList)
              {
+                 if (endingEnemy == null) continue;
+                 
                  var baseNodeList = _areaCheck.BaseNode(endingEnemy);
+                 if (baseNodeList == null) continue;
                  GameUtility.ShuffleList(baseNodeList);
                                         
                  foreach (var node in baseNodeList)
                  {
-                     if (_areaCheck.CanMove(thisEnemy, node))
+                     if (node == null) continue;
+                     
+                     if (_areaCheck.CanMove(enemy, node))
                      {
-                         var otherWalk = thisEnemy.UnitWalk(AreaOrder.Double, WalkOrder.Base, node);
+                         var otherWalk = enemy.UnitWalk(AreaOrder.Double, WalkOrder.Base, node);
                          if (otherWalk)
                          {
                              print("Go Near");
-                             thisEnemy.currentVigor = emptyVigor;
+                             enemy.currentVigor = emptyVigor;
                          }
                          return;
                      } 
@@ -111,9 +129,9 @@ namespace Game.MainGame
              }
         }
 
-        void ChaseCloseStrike(List<Player> moveList, Enemy thisEnemy)
+        void ChaseCloseStrike(List<Player> moveList, Enemy enemy)
         {
-            if (thisEnemy.currentVigor == emptyVigor) return;
+            if (enemy.currentVigor == emptyVigor) return;
             
             Player targetPlayer = null;
             TileNode targetTileNode = null;
@@ -121,12 +139,17 @@ namespace Game.MainGame
             // Check Player and TileNode
             foreach (var player in moveList)
             {
-                var tileList = _gameManager.areaCheck.ChaseTileList(player, thisEnemy);
+                if (player == null) continue;
+                
+                var tileList = _gameManager.areaCheck.ChaseTileList(player, enemy);
+                if (tileList == null) continue;
                 GameUtility.ShuffleList(tileList);
                             
                 foreach (var node in tileList)
                 {
-                    if (_areaCheck.CanMove(thisEnemy, node))
+                    if (node == null) continue;
+                    
+                    if (_areaCheck.CanMove(enemy, node))
                     { 
                         if (_areaCheck.CanChase(player, node))
                         {
@@ -141,29 +164,33 @@ namespace Game.MainGame
             if (targetPlayer != null && targetTileNode != null)
             {
                 print("ChaseClose");
-                var way = thisEnemy.UnitWalk(AreaOrder.Double, WalkOrder.Base, targetTileNode);
-                if (way) thisEnemy.currentVigor = emptyVigor;
+                var way = enemy.UnitWalk(AreaOrder.Double, WalkOrder.Base, targetTileNode);
+                if (way) enemy.currentVigor = emptyVigor;
+                // thisEnemy.Damage(targetPlayer);
             }
         }
 
-        void DoubleRangeStrike(List<Player> doubleList, Enemy thisEnemy)
+        void DoubleRangeStrike(List<Player> doubleList, Enemy enemy)
         {
-            if (thisEnemy.currentVigor == emptyVigor) return;
+            if (enemy.currentVigor == emptyVigor) return;
             
             foreach (var player in doubleList)
             {
-                if (_areaCheck.CanRange(player, thisEnemy))
+                if (player == null) continue;
+                
+                if (_areaCheck.CanRange(player, enemy))
                 {
-                    thisEnemy.currentVigor = emptyVigor;
-                    StartCoroutine(AttackRange(player, thisEnemy));
+                    enemy.currentVigor = emptyVigor;
+                    enemy.Damage(player);
+                    StartCoroutine(AttackRange(player, enemy));
                     break;
                 }
             }
         }
 
-        void MoveRangeStrike(List<Player> moveList, Enemy thisEnemy)
+        void MoveRangeStrike(List<Player> moveList, Enemy enemy)
         {
-            if (thisEnemy.currentVigor == emptyVigor) return;
+            if (enemy.currentVigor == emptyVigor) return;
             
             Player targetPlayer = null;
             TileNode targetTileNode = null;
@@ -171,12 +198,17 @@ namespace Game.MainGame
             // Check Player and TileNode
             foreach (var player in moveList)
             {
-                var tileList = _gameManager.areaCheck.ShootTileList(player, thisEnemy);
+                if (player == null) continue;
+
+                var tileList = _gameManager.areaCheck.ShootTileList(player, enemy);
+                if (tileList == null) continue;
                 GameUtility.ShuffleList(tileList);
                             
                 foreach (var node in tileList)
                 {
-                    if (_areaCheck.CanMove(thisEnemy, node))
+                    if (node == null) continue;
+                    
+                    if (_areaCheck.CanMove(enemy, node))
                     { 
                         if (_areaCheck.CanRange(player, node))
                         {
@@ -191,32 +223,38 @@ namespace Game.MainGame
             if (targetPlayer != null && targetTileNode != null)
             {
                 print("ShootRange");
-                thisEnemy.currentVigor = emptyVigor;
-                StartCoroutine(ShootRange(targetPlayer, targetTileNode, thisEnemy));
+                enemy.currentVigor = emptyVigor;
+                enemy.Damage(targetPlayer);
+                StartCoroutine(ShootRange(targetPlayer, targetTileNode, enemy));
             }
         }
 
-        void BaseCloseStrike(List<Player> baseList, Enemy thisEnemy)
+        void BaseCloseStrike(List<Player> baseList, Enemy enemy)
         {
-            if (thisEnemy.currentVigor == emptyVigor) return;
+            if (enemy.currentVigor == emptyVigor) return;
             
             foreach (var player in baseList)
             {
-                if (_areaCheck.CanSee(player, thisEnemy))
+                if (player == null) continue;
+                
+                if (_areaCheck.CanSee(player, enemy))
                 {
                     var playNearNode = _areaCheck.NearNode(player);
-                    var shortNode = ShortNode(GameUtility.Coordinate(thisEnemy.transform.position), playNearNode);
-                                
-                    if (shortNode != null) StartCoroutine(AttackClose(player, thisEnemy, shortNode));
-                    thisEnemy.currentVigor = emptyVigor;
+                    if (playNearNode == null) continue;
+                    var shortNode = ShortNode(GameUtility.Coordinate(enemy.transform.position), playNearNode);
+                    if (shortNode == null) continue;
+                    
+                    if (shortNode != null) StartCoroutine(AttackClose(player, enemy, shortNode));
+                    enemy.currentVigor = emptyVigor;
+                    enemy.Damage(player);
                     break;
                 }
             }
         }
 
-        void DoubleCloseStrike(List<Player> doubleList, Enemy thisEnemy)
+        void DoubleCloseStrike(List<Player> doubleList, Enemy enemy)
         {
-            if (thisEnemy.currentVigor == emptyVigor) return;
+            if (enemy.currentVigor == emptyVigor) return;
             
             if (_gameManager.doubleClose)
             {
@@ -224,24 +262,29 @@ namespace Game.MainGame
                 
                 foreach (var player in doubleList)
                 {
-                    if (_areaCheck.CanSee(player, thisEnemy))
+                    if (player == null) continue;
+                    
+                    if (_areaCheck.CanSee(player, enemy))
                     {
                         var playNearNode = _areaCheck.NearNode(player);
-                        var shortNode = ShortNode(GameUtility.Coordinate(thisEnemy.transform.position), playNearNode);
-                                    
-                        if (shortNode != null) StartCoroutine(AttackClose(player, thisEnemy, shortNode));
-                        thisEnemy.currentVigor = emptyVigor;
+                        if (playNearNode == null) continue;
+                        var shortNode = ShortNode(GameUtility.Coordinate(enemy.transform.position), playNearNode);
+                        if (shortNode == null) continue;
+                        
+                        if (shortNode != null) StartCoroutine(AttackClose(player, enemy, shortNode));
+                        enemy.currentVigor = emptyVigor;
+                        enemy.Damage(player);
                         break;
                     }
                 }
             }
         }
 
-        void DoubleCloseObstacle(List<Player> doubleList, Enemy thisEnemy)
+        void DoubleCloseObstacle(List<Player> doubleList, Enemy enemy)
         {
-            if (thisEnemy.currentVigor == emptyVigor) return;
+            if (enemy.currentVigor == emptyVigor) return;
             
-            if (thisEnemy.currentVigor >= fullVigor)
+            if (enemy.currentVigor >= fullVigor)
             {
                 print("No one can see!");
                 
@@ -254,21 +297,27 @@ namespace Game.MainGame
                 // Check Player and TileNode
                 foreach (var player in doubleList)
                 {
+                    if (player == null) continue;
                     if (player.marked <= emptyCount) continue;
                     
-                    var rushTileList = _gameManager.areaCheck.RushTileList(player, thisEnemy);
+                    var rushTileList = _gameManager.areaCheck.RushTileList(player, enemy);
                     GameUtility.ShuffleList(rushTileList);
                 
                     foreach (var node in rushTileList)
                     {
-                        if (_areaCheck.CanMove(thisEnemy, node))
+                        if (node == null) continue;
+                        
+                        if (_areaCheck.CanMove(enemy, node))
                         {
                             if (_areaCheck.CanMove(player, node))
                             {
                                 var playNearNode = _areaCheck.NearNode(player);
+                                if (playNearNode == null) continue;
                                 
                                 foreach (var nearNode in playNearNode)
                                 {
+                                    if (nearNode == null) continue;
+                                    
                                     GameUtility.ShuffleList(playNearNode);
                                     
                                     if (_areaCheck.CanMove(node, nearNode))
@@ -286,21 +335,23 @@ namespace Game.MainGame
             
                 if (targetPlayer != null && middleNode != null && endTileNode != null)
                 {
-                    StartCoroutine(RushClose(targetPlayer, thisEnemy, middleNode, endTileNode));
-                    thisEnemy.currentVigor = emptyVigor;
+                    StartCoroutine(RushClose(targetPlayer, enemy, middleNode, endTileNode));
+                    enemy.currentVigor = emptyVigor;
+                    enemy.Damage(targetPlayer);
                 }
                 else
                 {
                     print("They are over the wall!");
+                    RandomBase(enemy);
                 }
             }
         }
 
-        void BaseCloseObstacle(List<Player> baseList, Enemy thisEnemy)
+        void BaseCloseObstacle(List<Player> baseList, Enemy enemy)
         {
-            if (thisEnemy.currentVigor == emptyVigor) return;
+            if (enemy.currentVigor == emptyVigor) return;
             
-            if (thisEnemy.currentVigor >= fullVigor)
+            if (enemy.currentVigor >= fullVigor)
             {
                 print("No one can see!");
                 
@@ -313,19 +364,26 @@ namespace Game.MainGame
                 // Check Player and TileNode
                 foreach (var player in baseList)
                 {
-                    var rushTileList = _gameManager.areaCheck.RushTileList(player, thisEnemy);
+                    if (player == null) continue;
+                    
+                    var rushTileList = _gameManager.areaCheck.RushTileList(player, enemy);
                     GameUtility.ShuffleList(rushTileList);
                 
                     foreach (var node in rushTileList)
                     {
-                        if (_areaCheck.CanMove(thisEnemy, node))
+                        if (node == null) continue;
+                        
+                        if (_areaCheck.CanMove(enemy, node))
                         {
                             if (_areaCheck.CanMove(player, node))
                             {
                                 var playNearNode = _areaCheck.NearNode(player);
+                                if (playNearNode == null) continue;
                                 
                                 foreach (var nearNode in playNearNode)
                                 {
+                                    if (nearNode == null) continue;
+                                    
                                     GameUtility.ShuffleList(playNearNode);
                                     
                                     if (_areaCheck.CanMove(node, nearNode))
@@ -343,172 +401,216 @@ namespace Game.MainGame
             
                 if (targetPlayer != null && middleNode != null && endTileNode != null)
                 {
-                    StartCoroutine(RushClose(targetPlayer, thisEnemy, middleNode, endTileNode));
-                    thisEnemy.currentVigor = emptyVigor;
+                    StartCoroutine(RushClose(targetPlayer, enemy, middleNode, endTileNode));
+                    enemy.currentVigor = emptyVigor;
+                    enemy.Damage(targetPlayer);
                 }
                 else
                 {
                     print("They are over the wall!");
+                    RandomBase(enemy);
                 }
             }
         }
         
         IEnumerator StartEnemies()
         {
-            currentEnemy = null;
+            thisEnemy = null;
             GameUtility.ShuffleList(_gameManager.activeEnemyList);
             var gameOver = false;
 
-            foreach (var thisEnemy in _gameManager.activeEnemyList.ToList())
+            foreach (var player in _gameManager.activePlayerList)
             {
-                currentEnemy = thisEnemy;
-                print("Current enemy is " + currentEnemy.name);
-
-                var doSomething = this.currentEnemy.baseVigor;
-                var something = doSomething;
-                var oneMore = new WaitUntil(() => this.currentEnemy.currentVigor < something);
+                if (player == null) continue;
                 
+                player.copyHp = player.currentHp;
+            }
+            
 
-                if (currentEnemy.characterType == CharacterType.SwordMaster)
+            foreach (var currentEnemy in _gameManager.activeEnemyList.ToList())
+            {
+                if (currentEnemy == null) continue;
+                
+                while (currentEnemy.getHit == GetHit.GetHit)
                 {
-                    var baseList = _areaCheck.BaseList(currentEnemy);
-                    var doubleList = _areaCheck.DoubleList(currentEnemy, baseList);
+                    yield return null;
+                }
+                
+                currentEnemy.RenewalPlayerList();
+                
+                this.thisEnemy = currentEnemy;
+                print("Current enemy is " + this.thisEnemy.name);
 
-                    print(currentEnemy + " base count : " + baseList.Count + ", double count : " + doubleList.Count);
+                var doSomething = this.thisEnemy.baseVigor;
+                var something = doSomething;
+                var oneMore = new WaitUntil(() => this.thisEnemy.currentVigor < something);
+                
+                if (this.thisEnemy.characterType == CharacterType.SwordMaster)
+                {
+                    var baseList = _areaCheck.BaseList(this.thisEnemy);
+                    var doubleList = _areaCheck.DoubleList(this.thisEnemy, baseList);
+
+                    print(this.thisEnemy + " base count : " + baseList.Count + ", double count : " + doubleList.Count);
 
                     // hit 
-                    if (baseList.Count != emptyCount && currentEnemy.currentVigor >= halfVigor)
+                    if (baseList.Count != emptyCount && this.thisEnemy.currentVigor >= halfVigor)
                     {
                         GameUtility.ShuffleList(baseList);
-                        BaseCloseStrike(baseList, currentEnemy);
+                        BaseCloseStrike(baseList, this.thisEnemy);
                         
-                        if (currentEnemy.currentVigor >= fullVigor)
+                        if (this.thisEnemy.currentVigor >= fullVigor)
                         {
-                            BaseCloseObstacle(baseList, currentEnemy);
+                            BaseCloseObstacle(baseList, this.thisEnemy);
                         }
                     }
-                    else if (doubleList.Count != emptyCount && currentEnemy.currentVigor >= fullVigor)
+                    else if (doubleList.Count != emptyCount && this.thisEnemy.currentVigor >= fullVigor)
                     {
-                        DoubleCloseStrike(doubleList, currentEnemy);
+                        DoubleCloseStrike(doubleList, this.thisEnemy);
                         
-                        if (currentEnemy.currentVigor >= fullVigor)
+                        if (this.thisEnemy.currentVigor >= fullVigor)
                         {
-                            DoubleCloseObstacle(doubleList, currentEnemy);
+                            DoubleCloseObstacle(doubleList, this.thisEnemy);
                         }
                     }
                     
                     // chase
-                    if (currentEnemy.currentVigor >= fullVigor)
+                    if (this.thisEnemy.currentVigor >= fullVigor)
                     {
-                        var chaseList = _areaCheck.ChasePlayerList(_gameManager.activePlayerList, currentEnemy);
-                        print(currentEnemy + " chase count : " + chaseList.Count);
+                        var chaseList = _areaCheck.ChasePlayerList(_gameManager.activePlayerList, this.thisEnemy);
+                        print(this.thisEnemy + " chase count : " + chaseList.Count);
                         
                         GameUtility.ShuffleList(chaseList);
-                        ChaseCloseStrike(chaseList, currentEnemy);
+                        ChaseCloseStrike(chaseList, this.thisEnemy);
                     }
 
                     // protect friends
-                    if (currentEnemy.currentVigor >= fullVigor) 
+                    if (this.thisEnemy.currentVigor >= fullVigor) 
                     {
-                        GoNear(currentEnemy);
+                        GoNear(this.thisEnemy);
                     }
                     
-                    RandomBase(currentEnemy);
-                    currentEnemy.currentVigor = emptyVigor;
+                    RandomBase(this.thisEnemy);
+                    this.thisEnemy.currentVigor = emptyVigor;
                 }
                 
-                else if (currentEnemy.characterType == CharacterType.Ranger)
+                else if (this.thisEnemy.characterType == CharacterType.Ranger)
                 {
-                    var doubleList = _areaCheck.DoubleList(currentEnemy);
-                    var moveList = _areaCheck.ShootPlayerList(_gameManager.activePlayerList, currentEnemy);
+                    var doubleList = _areaCheck.DoubleList(this.thisEnemy);
+                    var moveList = _areaCheck.ShootPlayerList(_gameManager.activePlayerList, this.thisEnemy);
                     
-                    print(currentEnemy + " range count : " + doubleList.Count + ", move and shoot count : " + moveList.Count);
+                    print(this.thisEnemy + " range count : " + doubleList.Count + ", move and shoot count : " + moveList.Count);
 
-                    if (doubleList.Count != emptyCount && currentEnemy.currentVigor >= halfVigor)
+                    if (doubleList.Count != emptyCount && this.thisEnemy.currentVigor >= halfVigor)
                     {
                         GameUtility.ShuffleList(doubleList);
-                        DoubleRangeStrike(doubleList, currentEnemy);
+                        DoubleRangeStrike(doubleList, this.thisEnemy);
                     }
-                    if (moveList.Count != emptyCount && currentEnemy. currentVigor >= fullVigor)
+                    if (moveList.Count != emptyCount && this.thisEnemy. currentVigor >= fullVigor)
                     {
                         GameUtility.ShuffleList(moveList);
-                        MoveRangeStrike(moveList, currentEnemy);
+                        MoveRangeStrike(moveList, this.thisEnemy);
                     }
-                    else if (currentEnemy.currentVigor >= halfVigor) 
+                    else if (this.thisEnemy.currentVigor >= halfVigor) 
                     {
-                        GoNear(currentEnemy);
+                        GoNear(this.thisEnemy);
                     }
                     
-                    RandomBase(currentEnemy);
+                    RandomBase(this.thisEnemy);
                     
-                    currentEnemy.currentVigor = emptyVigor;
+                    this.thisEnemy.currentVigor = emptyVigor;
                 }
 
                 // if you make skill set, it'll need to change
-                var condition = new WaitUntil(() => this.currentEnemy.currentVigor <= emptyVigor);
+                var condition = new WaitUntil(() => this.thisEnemy.currentVigor <= emptyVigor);
                 yield return condition;
 
-                while (currentEnemy.activeState == ActiveState.Moving)
-                { 
-                    yield return null;
+                if (this.thisEnemy != null)
+                {
+                    // there was a null bug
+                    if (this.thisEnemy != null)
+                    {
+                        while (this.thisEnemy.activeState == ActiveState.Moving)
+                        {
+                            yield return null;
+                        }
+                    }
+                    
+                    if (this.thisEnemy != null)
+                    {
+                        this.thisEnemy.turnState = TurnState.Ending;  
+                    }
+                }
+                if (this.thisEnemy != null)
+                {
+                    while (this.thisEnemy.buyHit == BuyHit.BuyHit)
+                    { 
+                        if (this.thisEnemy == null) break; 
+                        yield return null;
+                    }
+                }
+                if (this.thisEnemy != null)
+                {
+                    this.thisEnemy.turnState = TurnState.Ending;    
                 }
                 
-                while (currentEnemy.buyHit == BuyHit.BuyHit)
-                { 
-                    yield return null;
-                }
-
-                currentEnemy.turnState = TurnState.Ending;
-                
+                currentEnemy.RenewalPlayerList();
                 gameOver = _gameManager.CheckGameOver();
                 if (gameOver) break;
             }
 
-            foreach (var player in _gameManager.activePlayerList.ToList())
+            foreach (var player in _gameManager.playerList.ToList())
             {
                 while (player.beHit == BeHit.BeHit)
                 { 
                     yield return null;
                 }
             }
-            
-            if (!gameOver)_gameManager.EnemyTurnEnding();
+
+            foreach (var enemy in _gameManager.activeEnemyList)
+            {
+                while (enemy.battle)
+                {
+                    yield return null;
+                }
+            }
+
+            if (!gameOver) _gameManager.EnemyTurnEnding();
         }
 
-        IEnumerator RushClose(Player player, Enemy thisEnemy, TileNode middleNode, TileNode endNode)
+        IEnumerator RushClose(Player player, Enemy enemy, TileNode middleNode, TileNode endNode)
         {
             //	Rush means after Moving and Attack
-            var firstWalk = thisEnemy.UnitWalk(AreaOrder.Base, WalkOrder.Base, endNode);
+            var firstWalk = enemy.UnitWalk(AreaOrder.Base, WalkOrder.Base, endNode);
 
             if (firstWalk)
             {
-                while (thisEnemy.activeState == ActiveState.Moving)
+                while (enemy.activeState == ActiveState.Moving)
                 {
                     yield return null;
                 }
                 
                 print("CloseDirect");
-                thisEnemy.CloseAttackByEnemy(player);
+                enemy.CloseAttackByEnemy(player);
                 
-                while (thisEnemy.buyHit == BuyHit.BuyHit)
+                while (enemy.buyHit == BuyHit.BuyHit)
                 { 
                     yield return null;
                 }
             }
             else
             {
-                var thisWalk = thisEnemy.UnitWalk(AreaOrder.Base, WalkOrder.Rush, middleNode);
+                var thisWalk = enemy.UnitWalk(AreaOrder.Base, WalkOrder.Rush, middleNode);
 
-                while (thisEnemy.activeState == ActiveState.Moving)
+                while (enemy.activeState == ActiveState.Moving)
                 {
                     yield return null;
                 }
                 
-                thisEnemy.transform.LookAt(player.transform);
+                enemy.transform.LookAt(player.transform);
     
-                var canWalk = thisEnemy.UnitWalk(AreaOrder.Base, WalkOrder.Base, endNode);
+                var canWalk = enemy.UnitWalk(AreaOrder.Base, WalkOrder.Base, endNode);
                 
-                while (thisEnemy.activeState == ActiveState.Moving)
+                while (enemy.activeState == ActiveState.Moving)
                 {
                     yield return null;
                 }
@@ -516,28 +618,28 @@ namespace Game.MainGame
                 if (canWalk)
                 {
                     print("RushClose");
-                    thisEnemy.CloseAttackByEnemy(player);
+                    enemy.CloseAttackByEnemy(player);
                 }
                 else
                 {
-                    var otherWalk = thisEnemy.UnitWalk(AreaOrder.Base, WalkOrder.Random, null);
+                    var otherWalk = enemy.UnitWalk(AreaOrder.Base, WalkOrder.Random, null);
                 }
 
-                while (thisEnemy.buyHit == BuyHit.BuyHit)
+                while (enemy.buyHit == BuyHit.BuyHit)
                 { 
                     yield return null;
                 }
             }
             
-            thisEnemy.currentVigor = emptyVigor;
+            enemy.currentVigor = emptyVigor;
         }
 
-        IEnumerator ShootRange(Player player, TileNode selectedNode, Enemy thisEnemy)
+        IEnumerator ShootRange(Player player, TileNode selectedNode, Enemy enemy)
         {
             //	Shoot means after Moving and Attack
-            var canWalk = thisEnemy.UnitWalk(AreaOrder.Base, WalkOrder.Base, selectedNode);
+            var canWalk = enemy.UnitWalk(AreaOrder.Base, WalkOrder.Base, selectedNode);
 
-            while (thisEnemy.activeState == ActiveState.Moving)
+            while (enemy.activeState == ActiveState.Moving)
             {
                 yield return null;
             }
@@ -545,33 +647,32 @@ namespace Game.MainGame
             if (canWalk)
             {
                 print("ShootRange");
-                thisEnemy.RangeAttackByEnemy(player);
-                thisEnemy.currentVigor = emptyVigor;
+                enemy.RangeAttackByEnemy(player);
+                enemy.currentVigor = emptyVigor;
             }
 
-            while (thisEnemy.buyHit == BuyHit.BuyHit)
+            while (enemy.buyHit == BuyHit.BuyHit)
             { 
                 yield return null;
             }
-            
         }
         
-        IEnumerator AttackRange(Player player, Enemy thisEnemy)
+        IEnumerator AttackRange(Player player, Enemy enemy)
         {
             print("AttackRange");
-            thisEnemy.RangeAttackByEnemy(player);
+            enemy.RangeAttackByEnemy(player);
 
-            while (thisEnemy.buyHit == BuyHit.BuyHit)
+            while (enemy.buyHit == BuyHit.BuyHit)
             { 
                 yield return null;
             }
         }
 
-        IEnumerator AttackClose(Player player, Enemy thisEnemy, TileNode shortNode)
+        IEnumerator AttackClose(Player player, Enemy enemy, TileNode shortNode)
         {
-            var canWalk = thisEnemy.UnitWalk(AreaOrder.Base, WalkOrder.Base, shortNode);
+            var canWalk = enemy.UnitWalk(AreaOrder.Base, WalkOrder.Base, shortNode);
             
-            while (thisEnemy.activeState == ActiveState.Moving)
+            while (enemy.activeState == ActiveState.Moving)
             { 
                 yield return null;
             }
@@ -579,14 +680,14 @@ namespace Game.MainGame
             if (canWalk)
             {
                 print("AttackClose");
-                thisEnemy.CloseAttackByEnemy(player);
+                enemy.CloseAttackByEnemy(player);
             }
             else
             {
-                var otherWalk = thisEnemy.UnitWalk(AreaOrder.Base, WalkOrder.Random, null);
+                var otherWalk = enemy.UnitWalk(AreaOrder.Base, WalkOrder.Random, null);
             }
 
-            while (thisEnemy.buyHit == BuyHit.BuyHit)
+            while (enemy.buyHit == BuyHit.BuyHit)
             { 
                 yield return null;
             }
