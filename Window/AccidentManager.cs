@@ -10,14 +10,13 @@ namespace Game.Window
         public UiManager uiManager;
         public CityAreaManager cityAreaManager;
         public CharacterManager characterManager;
-        
         public int defaultExpiry = 5;
         public int spendExpiry = 1;
         private readonly int zeroExpiry = 0;
-        private int initEventCount = 8;
-        private int initMarketCount = 2;
-        private int initHospitalCount = 1;
-        private int initRecruitCount = 1;
+        public int initEventCount = 4;
+        public int initMarketCount = 2;
+        public int initHospitalCount = 3;
+        public int initRecruitCount = 1;
 
         private void Awake()
         {
@@ -83,6 +82,8 @@ namespace Game.Window
 
         void SetId(List<Accident> accidents, List<int> intList)
         {
+            var where = characterManager.WhereForm(cityAreaManager.dataManager.GetPosition());
+
             if (accidents.Count > intList.Count)
             {
                 intList = GameUtility.RandomExtraction(cityAreaManager.cityAreaList.Count, accidents.Count);
@@ -90,7 +91,10 @@ namespace Game.Window
 
             for (int i = 0; i < accidents.Count; i++)
             {
-                accidents[i].id = intList[i];
+                if (intList[i] != where.id)
+                {
+                    accidents[i].id = intList[i];    
+                }
             }
         }
 

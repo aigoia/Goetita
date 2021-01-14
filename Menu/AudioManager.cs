@@ -11,15 +11,15 @@ namespace Game.Menu
         public List<AudioClip> soundList = new List<AudioClip>();
         private AudioSource _source;
 
-        public static AudioManager instance;
+        public static AudioManager Instance;
 
         private void Awake()
         {
             _source = GetComponent<AudioSource>();
 
-            if (instance == null)
+            if (Instance == null)
             {
-                instance = this;
+                Instance = this;
             }
             else
             {

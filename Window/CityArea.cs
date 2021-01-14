@@ -9,19 +9,17 @@ namespace Game.Window
     {
         private CityAreaManager _cityAreaManager;
         public float censorExtents = 1f;
-        public Vector3 height = new Vector3(0, 1.5f, 0);
+        
         public List<CityArea> connectedNodeList;
         public List<Road> connectedRoadList;
     
         public GameManager gameManager;
         public AccidentManager accidentManager; 
         CharacterManager _characterManager;
-        DataManager _dataManager;
-    
+
         public IconBase iconBase;
         public Accident assignedAccident = null;
         public int id;
-        public float moveSpeed = 1f;
         private int cycle = 4;
         private int eventCount = 4;
         private int marketCount = 1;
@@ -29,7 +27,6 @@ namespace Game.Window
 
         private void Awake()
         {
-            if (_dataManager == null) _dataManager = FindObjectOfType<DataManager>();
             if (_cityAreaManager == null) _cityAreaManager = FindObjectOfType<CityAreaManager>();
             if (gameManager == null) gameManager = FindObjectOfType<GameManager>();
             if (accidentManager == null) accidentManager = FindObjectOfType<AccidentManager>();
@@ -43,13 +40,14 @@ namespace Game.Window
 
             if (_cityAreaManager.initCount >= 1)
             {
-                // print(_cityAreaManager.mainCharacter);
-                iTween.MoveTo(_cityAreaManager.mainCharacter, this.transform.position + height, 1f); 
+                var position = this.transform.position;
+                iTween.MoveTo(_cityAreaManager.mainCharacter, position + _cityAreaManager.height, _cityAreaManager.moveSpeed); 
                 _cityAreaManager.initCount -= 1;
-            
-
                 _cityAreaManager.uiManager.ButtonOff();
                 _cityAreaManager.uiManager.ButtonOn(this);
+                
+                // remember where we are
+                _cityAreaManager.dataManager.SavePosition(position + _cityAreaManager.height);
                 return;
             }
 
@@ -59,7 +57,7 @@ namespace Game.Window
             // add turn
             if (originArea.connectedNodeList.Exists(i => i.name == this.name))
             {
-                iTween.MoveTo(_cityAreaManager.mainCharacter, this.transform.position + height, moveSpeed);
+                iTween.MoveTo(_cityAreaManager.mainCharacter, this.transform.position + _cityAreaManager.height, _cityAreaManager.moveSpeed);
 
                 PlusTurnDate();
                 SpendMovingCost();
@@ -73,23 +71,23 @@ namespace Game.Window
             {
                 var movingCost = 20;
 
-                if (_dataManager.currentCharacterList.Count <= 2)
+                if (_cityAreaManager.dataManager.currentCharacterList.Count <= 2)
                 {
                     movingCost = 20;
                 }
-                else if (_dataManager.currentCharacterList.Count == 3)
+                else if (_cityAreaManager.dataManager.currentCharacterList.Count == 3)
                 {
                     movingCost = 30;
                 }
-                else if (_dataManager.currentCharacterList.Count == 4)
+                else if (_cityAreaManager.dataManager.currentCharacterList.Count == 4)
                 {
                     movingCost = 50;
                 }
-                else if (_dataManager.currentCharacterList.Count == 5)
+                else if (_cityAreaManager.dataManager.currentCharacterList.Count == 5)
                 {
                     movingCost = 90;
                 }
-                else if (_dataManager.currentCharacterList.Count == 6)
+                else if (_cityAreaManager.dataManager.currentCharacterList.Count == 6)
                 {
                     movingCost = 160;
                 }
@@ -98,37 +96,37 @@ namespace Game.Window
                     movingCost = 200;
                 }
 
-                if (_dataManager.gold >= movingCost)
+                if (_cityAreaManager.dataManager.baseData.currentGold >= movingCost)
                 {
-                    _dataManager.gold = _dataManager.gold - movingCost;
-                    _dataManager.RenewalGold();
+                    _cityAreaManager.dataManager.baseData.currentGold = _cityAreaManager.dataManager.baseData.currentGold - movingCost;
+                    _cityAreaManager.dataManager.RenewalGold();
                 }
                 else 
                 {
                     LoseHp();
-                    _dataManager.SaveAll();
+                    _cityAreaManager.dataManager.SaveAll();
                     return;
                 }
             
                 gameManager.mainCamera.Hungry(false);
-                _dataManager.RenewalGold();
+                _cityAreaManager.dataManager.RenewalGold();
                 
 
             }
 
             void LoseHp()
             {
-                foreach (var character in _dataManager.currentCharacterList)
+                foreach (var character in _cityAreaManager.dataManager.currentCharacterList)
                 {
-                    if (character.CurrentHp > 0)
+                    if (character.currentHp > 0)
                     {
-                        if (character.CurrentHp > 3)
+                        if (character.currentHp > 3)
                         {
-                            character.CurrentHp = (int) character.CurrentHp / 2;
+                            character.currentHp = (int) character.currentHp / 2;
                         }
-                        else if (character.CurrentHp <= 3)
+                        else if (character.currentHp <= 3)
                         {
-                            character.CurrentHp = character.CurrentHp - 1;
+                            character.currentHp = character.currentHp - 1;
                         }    
                     }
 
@@ -139,16 +137,16 @@ namespace Game.Window
                     else
                     {
                         gameManager.mainCamera.Hungry(true);
-                        print(character.CharacterName +" lose HP to " + character.CurrentHp);
+                        print(character.characterName +" lose HP to " + character.currentHp);
                     }
                 }
             }
 
             bool HpCheck()
             {
-                foreach (var character in _dataManager.currentCharacterList)
+                foreach (var character in _cityAreaManager.dataManager.currentCharacterList)
                 {
-                    if (character.CurrentHp > 0)
+                    if (character.currentHp > 0)
                     {
                         return false;
                     }
@@ -160,11 +158,11 @@ namespace Game.Window
         
             void PlusTurnDate()
             {
-                _dataManager.turnDate += 1;
-                _dataManager.RenewalTurnData();
+                _cityAreaManager.dataManager.baseData.turnDate += 1;
+                _cityAreaManager.dataManager.RenewalTurnData();
             }
         
-            var remainder = _dataManager.turnDate & cycle;
+            var remainder = _cityAreaManager.dataManager.baseData.turnDate & cycle;
         
             // Make Accident
             if (remainder == 0)

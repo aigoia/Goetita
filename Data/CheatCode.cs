@@ -1,46 +1,45 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections;
 using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 
-public class CheatCode : MonoBehaviour
+namespace Game.Data
 {
-    public TMP_InputField cheat;
-    public GameObject inputPanel;
-    public GameObject test;
-    public GameObject win;
+    public class CheatCode : MonoBehaviour
+    {
+        public TMP_InputField cheat;
+        public GameObject inputPanel;
+        public GameObject test;
+        public GameObject win;
     
 
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.F1))
+        private void Update()
         {
-            inputPanel.SetActive(true);
-            StartCoroutine(Cheat());
-        }
-    }
-
-    private IEnumerator Cheat()
-    {
-        var waitEnter = true;
-        
-        while (waitEnter)
-        {
-            if (Input.GetKeyDown(KeyCode.Return))
+            if (Input.GetKeyDown(KeyCode.F1))
             {
-                if (cheat.text == "win")
+                inputPanel.SetActive(true);
+                StartCoroutine(Cheat());
+            }
+        }
+
+        private IEnumerator Cheat()
+        {
+            var waitEnter = true;
+        
+            while (waitEnter)
+            {
+                if (Input.GetKeyDown(KeyCode.Return))
                 {
-                    waitEnter = false;
-                    win.SetActive(true);
+                    if (cheat.text == "win")
+                    {
+                        waitEnter = false;
+                        win.SetActive(true);
+                    }
+
+                    inputPanel.SetActive(false);
                 }
 
-                inputPanel.SetActive(false);
+                yield return null;
             }
-
-            yield return null;
         }
     }
 }

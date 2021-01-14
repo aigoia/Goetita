@@ -26,11 +26,14 @@ namespace Game.Window
                 if (i <= buttonList.Count)
                 {
                     buttonList[i].SetActive(true);
-                    buttonList[i].GetComponent<CharacterButton>().characterId = dataManager.currentCharacterList[i].CharacterId;
+                    buttonList[i].GetComponent<CharacterButton>().characterId = dataManager.currentCharacterList[i].characterId;
+                    hpBarList[i].characterId = dataManager.currentCharacterList[i].characterId;
                     activeButtonList.Add(buttonList[i].GetComponent<CharacterButton>());
                     activeButtonList[i].character = dataManager.currentCharacterList[i];
                 }
             }
+            
+            FillHp();
         }
 
         public void FillHp()

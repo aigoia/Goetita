@@ -13,39 +13,41 @@ namespace Game.MainGame
         public GameManager gameManager;
         public UIManager uiManager;
         public List<Vector3> initVectors = new List<Vector3>();
+        public int rewordGoldBase = 400;
+        public int rewordExpBase = 9;
+        public Settings settings;
 
         private void Awake()
         {
-            currentCharacterList = ES3.Load<List<Character>>("Characters", "Game");
             if (gameManager == null) gameManager = FindObjectOfType<GameManager>();
             if (uiManager == null) uiManager = FindObjectOfType<UIManager>();
+            if (settings == null) settings = FindObjectOfType<Settings>();
         }
 
         private void Start()
         {
+            currentCharacterList = settings.LoadCharacter();
+          
             PlayerOn();
             Setting();
             gameManager.MakeActivePlayerList(gameManager.playerList, gameManager.activePlayerList);
             uiManager.InitSetting();
-            
-            
         }
-        
-        
+
         private void Setting()
         {
             foreach (var character in currentCharacterList)
             {
-                if (character.CurrentHp <= 0) continue;
+                if (character.currentHp <= 0) continue;
                 
-                var player = gameManager.playerList.Find(i => i.characterName == character.CharacterName);
+                var player = gameManager.playerList.Find(i => i.characterId == character.characterId);
                 // print(player.name);
                 // print("(" + character.CharacterId + ") : " + character.BaseHp);
-                player.baseHp = character.BaseHp;
-                player.currentHp = character.CurrentHp;
-                player.copyHp = character.CurrentHp;
+                player.baseHp = character.baseHp;
+                player.currentHp = character.currentHp;
+                player.copyHp = character.currentHp;
 
-                player.baseDeal = character.BaseDeal;
+                player.baseDeal = character.baseDeal;
             }
         }
 
@@ -59,23 +61,23 @@ namespace Game.MainGame
 
             foreach (var character in currentCharacterList)
             {
-                if (character.CurrentHp <= 0) continue;
-                print(character.CharacterName);
+                if (character.currentHp <= 0) continue;
+                print(character.characterName);
 
-                if (character.Type == CharacterClass.Claymore)
+                if (character.type == CharacterClass.Claymore)
                 {
                     var swordMaster = swordMasters.Find( sword =>
-                        sword.GetComponent<Player>().characterName == character.CharacterName);
+                        sword.GetComponent<Player>().characterId == character.characterId);
                     swordMaster.transform.position = initVectors[i];
                     swordMaster.SetActive(true);
                 
                     s = s + 1;
                     i = i + 1;
                 }
-                else if (character.Type == CharacterClass.Ranger)
+                else if (character.type == CharacterClass.Ranger)
                 {
                     var ranger = rangers.Find( gun =>
-                        gun.GetComponent<Player>().characterName == character.CharacterName);
+                        gun.GetComponent<Player>().characterId == character.characterId);
                     ranger.transform.position = initVectors[i];
                     ranger.SetActive(true);
                     
@@ -93,15 +95,13 @@ namespace Game.MainGame
 
         public void WinNormal()
         {
-            WinReword(200, 9);
+            WinReword(rewordGoldBase, rewordExpBase);
         }
         
         public void WinReword(int rewordGold = 0, int rewordExp = 0)
         {
-            var gold = ES3.Load<int>("Gold", "Game");
-            gold = gold + rewordGold;
-            ES3.Save<int>("Gold", gold, "Game");
-            
+            settings.baseData.currentGold = settings.baseData.currentGold + rewordGold;
+            settings.SaveBaseData();
             AddEqualExp(rewordExp);
         }
 
@@ -111,25 +111,25 @@ namespace Game.MainGame
             
             foreach (var character in currentCharacterList)
             {
-                if (character.CurrentHp <= 0) continue;
-                character.Exp = character.Exp + each;
+                if (character.currentHp <= 0) continue;
+                character.exp = character.exp + each;
                 
-                print(character.Exp);
+                print(character.characterName + " EXP : character.Exp");
             }
             
-            ES3.Save<List<Character>>("Characters", currentCharacterList, "Game");
+            settings.SaveCharacter(currentCharacterList);
         }
         
         [ContextMenu("Print Information")]
         public void PrintInformation()
         {
-            var characterList = ES3.Load<List<Character>>("Characters", "Game");
+            var characterList = settings.LoadCharacter();
             
             foreach (var character in characterList)
             {
-                print(character.CharacterName + " (" + character.CharacterId + ") : ");
-                print("Base HP : " + character.BaseHp + ", Current HP : " + character.CurrentHp);
-                print("Level : " + character.Level + ", EXP : " + character.Exp);
+                print(character.characterName + " (" + character.characterId + ") : ");
+                print("Base HP : " + character.baseHp + ", Current HP : " + character.currentHp);
+                print("Level : " + character.level + ", EXP : " + character.exp);
             }
         }
     }

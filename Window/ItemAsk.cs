@@ -1,4 +1,5 @@
-﻿using TMPro;
+﻿using Game.Data;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -18,16 +19,16 @@ namespace Game.Window
 		public void Take()
 		{
 			// Appear
-			var currentItems = selectedCharacter.ItemList;
+			var currentItems = selectedCharacter.itemList;
 			if (currentItems.Count >= inventoryManager.limitSlot) return;
             
-			currentItems.Add(new Item(marketManager.ownedItems.Find(i => i.ItemId == currentItem.ItemId)));
+			currentItems.Add(new Item(inventoryManager.dataManager.ownedItems.Find(i => i.itemId == currentItem.itemId)));
 
 			foreach (var slot in inventoryManager.slotList)
 			{
 				if (slot.gameObject.activeSelf == false)
 				{
-					var newItem = new Item(marketManager.ownedItems.Find(i => i.ItemId == currentItem.ItemId));
+					var newItem = new Item(inventoryManager.dataManager.ownedItems.Find(i => i.itemId == currentItem.itemId));
 					inventoryManager.equipItem.Add(newItem);
 					slot.gameObject.SetActive(true);
 					var slotButton = slot.GetComponent<ItemButtonManager>();
@@ -37,22 +38,24 @@ namespace Game.Window
 			}
 			
 			// Disappear
-			print("this : " + currentItem.ItemId);
+			print("this : " + currentItem.itemId);
 			foreach (var character in inventoryManager.dataManager.currentCharacterList)
 			{
-				if (character.CharacterId == itemHaveCharacter.CharacterId)
+				if (character.characterId == itemHaveCharacter.characterId)
 				{
-					character.ItemList.Remove(character.ItemList.Find(i => i.ItemId == currentItem.ItemId));
+					character.itemList.Remove(character.itemList.Find(i => i.itemId == currentItem.itemId));
 				}
 			}
+			
+			inventoryManager.dataManager.SaveCharacter(inventoryManager.dataManager.currentCharacterList);
 		}
 		
 		private void Insert(ItemButtonManager itemButton, Item item)
 		{
-			itemButton.itemId = item.ItemId;
-			itemButton.itemNameText.text = item.ItemName;
-			itemButton.priceText.text = item.ItemPrice.ToString();
-			itemButton.priceInt = item.ItemPrice;
+			itemButton.itemId = item.itemId;
+			itemButton.itemNameText.text = item.itemName;
+			itemButton.priceText.text = item.itemPrice.ToString();
+			itemButton.priceInt = item.itemPrice;
 		}
 	}
 }

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Game.Data;
 using UnityEngine;
 
 namespace Game.Window
@@ -13,10 +14,14 @@ namespace Game.Window
         public UiManager uiManager;
         public Vector3 areaScale = new Vector3(5f, 5f, 5f);
         public int initCount = 1;
-    
+        public Vector3 height = new Vector3(0, 0.5f, 0);
+        public float moveSpeed = 1f;
+        public DataManager dataManager;
+
         private void Awake()
         {
             if (mainCharacter == null) print("MainCharacter is Missing!");
+            if (dataManager == null) dataManager = FindObjectOfType<DataManager>();
             if (testIcon == null) print("TestIcon is Missing");
             if (uiManager == null) uiManager = FindObjectOfType<UiManager>();
         }
@@ -24,8 +29,10 @@ namespace Game.Window
         private void Start()
         {
             UiCheck();
+            dataManager.LoadPosition();
+            iTween.MoveTo(mainCharacter, dataManager.whereData.currentPosition, moveSpeed);
         }
-
+        
         [ContextMenu("Input ID")]
         public void InputId()
         {
@@ -49,11 +56,9 @@ namespace Game.Window
         
             // print(hits[0].transform.name);
             if (hits.Length == 0) return;
-        
             var cityArea = hits[0].transform.GetComponent<CityArea>();
-
             if (cityArea == null) return;
-        
+            
             uiManager.ButtonOn(cityArea);
         }
 

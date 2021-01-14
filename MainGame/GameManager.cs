@@ -30,7 +30,7 @@ namespace Game.MainGame
 		List<TileNode> _closeCombatList;
 		public GameObject holder;
 		public GameObject milestone;
-		WaitForSeconds wait = new WaitForSeconds(1.5f);
+		WaitForSeconds _wait = new WaitForSeconds(1.5f);
 		
 		public EffectManager effectManager;
 		public SoundManager soundManager;
@@ -96,8 +96,6 @@ namespace Game.MainGame
 			if (close == null) close = transform.Find("Close");
 			if (_cameraController == null)_cameraController = FindObjectOfType<CameraController>();
 			if (_board == null) _board = FindObjectOfType<Board>();
-			// playerList = new List<Player>(FindObjectsOfType<Player>());
-			// MakeActivePlayerList(playerList, activePlayerList);
 			_enemyList = new List<Enemy>(FindObjectsOfType<Enemy>());
 			if (enemyAi == null) enemyAi = FindObjectOfType<EnemyAi>();
 			MakeActiveEnemyList(_enemyList, activeEnemyList);
@@ -154,28 +152,27 @@ namespace Game.MainGame
 			{
 				player.currentHp = player.copyHp;
 			}
-			
-			var characters = ES3.Load<List<Character>>("Characters", "Game");
+
+			var characters = settings.LoadCharacter();
 
 			foreach (var character in characters)
 			{
 				// if character didn't attend battle, keep their hp
-				character.CurrentHp = 0;
+				character.currentHp = 0;
 			}
 			
 			foreach (var player in activePlayerList)
 			{
-				characters.Find(i => i.CharacterId == player.characterId).CurrentHp = player.currentHp;
-				
+				characters.Find(i => i.characterId == player.characterId).currentHp = player.currentHp;
 			}
 			
-			ES3.Save<List<Character>>("Characters", characters, "Game");
+			settings.SaveCharacter(characters);
 		}
 
 
 		void CloseAttack()
 		{
-			if (currentPlayer.characterType != CharacterType.SwordMaster) return;
+			if (currentPlayer.characterType != CharacterType.Claymore) return;
 			
 			foreach (var direction in GameUtility.EightDirections)
 			{ 
@@ -230,9 +227,6 @@ namespace Game.MainGame
 
 			foreach (var player in activePlayerList)
 			{
-				// print(player.activeState);
-				// print(player.currentHp);
-				
 				if (player.activeState == ActiveState.Dead) continue;
 				if (player.currentHp <= 0) continue;
 				if (player.baseVigor <= 0)
@@ -290,7 +284,7 @@ namespace Game.MainGame
 		
 		void CloseUiCheck()
 		{
-			if (currentPlayer.characterType == CharacterType.SwordMaster)
+			if (currentPlayer.characterType == CharacterType.Claymore)
 			{
 				CloseAttack();
 			}
@@ -331,7 +325,6 @@ namespace Game.MainGame
 			if (activeEnemyList.Count == 0)
 			{
 				print("Victory");
-				// playerData.WinReword(200, 9);
 				return true;
 			}
 

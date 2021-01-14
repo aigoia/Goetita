@@ -26,17 +26,19 @@ namespace Game.Window
 		public UnityEvent loseHp;
 		public DataManager dataManager;
 		public InventoryManager inventoryManager;
+		public UnityEvent init;
 
 		private void Awake()
 		{
 			if (dataManager == null) dataManager = FindObjectOfType<DataManager>();
-			// if (inventoryManager == null) inventoryManager = FindObjectOfType<InventoryManager>();
+			
 		}
 
 		private void Start()
 		{
 			mainCamera.Hungry(false);
 			dataManager.LevelCheck();
+			init.Invoke();
 		}
 
 		public void TeamPanelActive(bool button)

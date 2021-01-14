@@ -15,9 +15,6 @@ namespace Game.Window
 		public int discount = 2;
 		public MarketItem buy;
 		public MarketItem sell;
-		public List<Item> ownedItems = new List<Item>();
-		
-		public List<Item> testItemList;
 		public List<Item> supplyList;
 
 		public int testGold = 1000;
@@ -35,7 +32,8 @@ namespace Game.Window
 		{
 			// SettingGold(testGold); // Test
 			supplyList = new List<Item>();
-			// TestSetting(buy);
+			dataManager.MakeItemList();
+			TestSetting(buy, dataManager.itemList);
 		}
 
 		public void DefaultOn()
@@ -48,15 +46,15 @@ namespace Game.Window
 		public void ShowOwnedItem()
 		{
 			int count = 0;
-            count = sell.marketItemList.Count < ownedItems.Count ? sell.marketItemList.Count : ownedItems.Count;
+            count = sell.marketItemList.Count < dataManager.ownedItems.Count ? sell.marketItemList.Count : dataManager.ownedItems.Count;
             
             for (int i = 0; i < count; i++)
             {
             	sell.marketItemList[i].gameObject.SetActive(true);
-            	GetMarketText(sell, i).text = ownedItems[i].ItemName;
-            	GetPriceText(sell, i).text = ownedItems[i].ItemPrice.ToString();
-            	sell.marketItemList[i].GetComponent<ItemButtonManager>().itemId = (int)ownedItems[i].ItemId;
-            	sell.marketItemList[i].GetComponent<ItemButtonManager>().priceInt = (int)ownedItems[i].ItemPrice;
+            	GetMarketText(sell, i).text = dataManager.ownedItems[i].itemName;
+            	GetPriceText(sell, i).text = dataManager.ownedItems[i].itemPrice.ToString();
+            	sell.marketItemList[i].GetComponent<ItemButtonManager>().itemId = (int)dataManager.ownedItems[i].itemId;
+            	sell.marketItemList[i].GetComponent<ItemButtonManager>().priceInt = (int)dataManager.ownedItems[i].itemPrice;
             }
 		}
 
@@ -68,53 +66,21 @@ namespace Game.Window
 			for (int i = 0; i < count; i++)
 			{
 				type.marketItemList[i].gameObject.SetActive(true);
-				GetMarketText(type, i).text = list[i].ItemName;
-				GetPriceText(type, i).text = list[i].ItemPrice.ToString();
-				type.marketItemList[i].GetComponent<ItemButtonManager>().itemId = (int)list[i].ItemId;
-				type.marketItemList[i].GetComponent<ItemButtonManager>().priceInt = (int)list[i].ItemPrice;
+				GetMarketText(type, i).text = list[i].itemName;
+				GetPriceText(type, i).text = list[i].itemPrice.ToString();
+				type.marketItemList[i].GetComponent<ItemButtonManager>().itemId = (int)list[i].itemId;
+				type.marketItemList[i].GetComponent<ItemButtonManager>().priceInt = (int)list[i].itemPrice;
 			}
 		}
 
-		private void TestSetting(MarketItem type)
+		private void TestSetting(MarketItem type, List<Item> testItemList)
 		{
-			testItemList = new List<Item>()
-			{
-				new Item (1, "Heavy",100),
-				new Item (2, "Light",120),
-				new Item (3, "Heavy",100),
-				new Item (4, "Light",120),
-				new Item (5, "Heavy",100),
-				new Item (6, "Light",120),
-				new Item (7, "Heavy",100),
-				new Item (8, "Light",120),
-				new Item (9, "Heavy",100),
-				new Item (10, "Light",120),
-				new Item (11, "Heavy",100),
-				new Item (12, "Light",120),
-				new Item (13, "Heavy",100),
-				new Item (14, "Light",120),
-				new Item (15, "Heavy",100),
-				new Item (16, "Light",120),
-				new Item (17, "Heavy",100),
-				new Item (18, "Light",120),
-				new Item (19, "Heavy",100),
-				new Item (20, "Light",120),
-				new Item (21, "Heavy",100),
-				new Item (22, "Light",120),
-				new Item (23, "Heavy",100),
-				new Item (24, "Light",120),
-				new Item (25, "Heavy",100),
-				new Item (26, "Light",120),
-				new Item (27, "Heavy",100),
-				new Item (28, "Light",120),
-			};
-			
 			ShowItem(type, testItemList);
 		}
 
 		private void SettingGold(int money)
 		{
-			dataManager.gold = money;
+			dataManager.baseData.currentGold = money;
 			dataManager.RenewalGold();
 		}
 		

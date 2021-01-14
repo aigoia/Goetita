@@ -9,28 +9,31 @@ namespace Game.Data
 		Non, Claymore, Ranger
 	}
 
+	[System.Serializable]
 	public class Character
 	{
-		public int CharacterId;
-		public string CharacterName;
-		public readonly List<Item> ItemList = new List<Item>();
-		public int Level = 0;
-		public int Exp = 0;
-		public int BaseHp = 0;
-		public int CurrentHp = 0;
-		public int BaseDeal = 0;
-		public CharacterClass Type;
+		public int characterId;
+		public string characterName;
+		public List<Item> itemList;
+		public int level = 0;
+		public int exp = 0;
+		public int baseHp = 0;
+		public int currentHp = 0;
+		public int baseDeal = 0;
+		public CharacterClass type;
 
-		public Character(int characterId, string characterName, CharacterClass type, int baseHp, int currentHp, int baseDeal, int level, int exp)
+		public Character(int characterId, string characterName, CharacterClass type, int baseHp, int currentHp, int baseDeal, int level, int exp, List<Item> itemList)
 		{
-			CharacterId = characterId;
-			CharacterName = characterName;
-			Type = type;
-			BaseHp = baseHp;
-			CurrentHp = currentHp;
-			BaseDeal = baseDeal;
-			Level = level;
-			Exp = exp;
+			this.characterId = characterId;
+			this.characterName = characterName;
+			this.type = type;
+			this.baseHp = baseHp;
+			this.currentHp = currentHp;
+			this.baseDeal = baseDeal;
+			this.level = level;
+			this.exp = exp;
+			this.itemList = itemList;
 		}
+		
 	}
 }

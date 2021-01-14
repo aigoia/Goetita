@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Game.Data;
 using UnityEngine;
 
 namespace Game.MainGame
@@ -31,6 +32,7 @@ namespace Game.MainGame
 
         PathFinding _pathFinding;
         public PathFinding PathFinding => _pathFinding;
+        public Transform mapGround;
 
         GameManager _gameManager;
         EnemyAi _enemyAi;
@@ -46,9 +48,15 @@ namespace Game.MainGame
             if (boardBoundary == null) boundary = transform.Find("BoardBoundary");
             if (tileNode == null) tileNode = transform.Find("TileNode");
 
+            MakeGround();
             MakeMap();
             
             if (_nodeList == null) _nodeList = new List<TileNode>(FindObjectsOfType<TileNode>());
+        }
+
+        private void MakeGround()
+        {
+            
         }
 
         [ContextMenu("Make Map")]

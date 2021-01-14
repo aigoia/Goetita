@@ -125,7 +125,7 @@ namespace Game.MainGame
         {
             foreach (var item in list)
             {
-                print(item.CharacterName + "(" + item.CharacterId + ")");
+                print(item.characterName + "(" + item.characterId + ")");
             }
         }
         

@@ -17,7 +17,7 @@ namespace Game.Window
 		public void ChangeCharacter()
 		{
 			inventoryManager.selectedCharacter =
-				inventoryManager.dataManager.currentCharacterList.Find(i => i.CharacterId == characterId);
+				inventoryManager.dataManager.currentCharacterList.Find(i => i.characterId == characterId);
 			// _inventoryManager.SetBicProfile(id);
 			inventoryManager.ChangeSlot(characterId);
 			// print(inventoryManager.selectedCharacter.CharacterName);

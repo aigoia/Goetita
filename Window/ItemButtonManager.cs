@@ -1,6 +1,7 @@
 ﻿using System;
 using Dark_UI.Scripts;
 using Game.Data;
+using Michsky.UI.Dark;
 using TMPro;
 using UnityEngine;
 
@@ -31,8 +32,9 @@ namespace Game.Window
         public int priceInt;
         public Transform button;
         public int itemId;
+        public ItemType itemType;
         public String hasIt = " has it";
-        
+
         private void Awake()
         {
             if (_dataManager == null) _dataManager = FindObjectOfType<DataManager>();
@@ -58,7 +60,11 @@ namespace Game.Window
         {
             if (buttonType == ItemButtonType.Slot)
             {
-                inventoryManager.selectedCharacter.ItemList.RemoveAll(i => i.ItemId == itemId);
+                _dataManager.currentCharacterList.Find
+                        (character => character.characterName == inventoryManager.selectedCharacter.characterName)
+                    .itemList
+                    .RemoveAll(item => item.itemId == itemId);
+                inventoryManager.equipManager.ResetSlot(itemId);
                 ReItem(this);
                 if (sound != null) sound.Play();
                 gameObject.SetActive(false);
@@ -67,21 +73,25 @@ namespace Game.Window
             {
                 Enroll();
             }
+            
+            _dataManager.SaveCharacter(_dataManager.currentCharacterList);
         }
 
         private void Take(Data.Character itemHaveCharacter, Item currentItem)
         {
             // Appear
-            var currentItems = inventoryManager.selectedCharacter.ItemList;
+            var currentItems = _dataManager.currentCharacterList.Find
+                    (character => character.characterName == inventoryManager.selectedCharacter.characterName)
+                .itemList;
             if (currentItems.Count >= inventoryManager.limitSlot) return;
                     
-            currentItems.Add(new Item(marketManager.ownedItems.Find(i => i.ItemId == currentItem.ItemId)));
+            currentItems.Add(new Item(_dataManager.ownedItems.Find(i => i.itemId == currentItem.itemId)));
         
             foreach (var slot in inventoryManager.slotList)
             {
                 if (slot.gameObject.activeSelf == false)
                 {
-                    inventoryManager.equipItem.Add(new Item(marketManager.ownedItems.Find(i => i.ItemId == currentItem.ItemId)));
+                    inventoryManager.equipItem.Add(new Item(_dataManager.ownedItems.Find(i => i.itemId == currentItem.itemId)));
                     slot.gameObject.SetActive(true);
                     var slotButton = slot.GetComponent<ItemButtonManager>();
                     Insert(slotButton, currentItem);
@@ -90,26 +100,40 @@ namespace Game.Window
             }
                     
             // Disappear
-            itemHaveCharacter.ItemList.RemoveAll(i => i.ItemId == itemId);
+            _dataManager.currentCharacterList.Find
+                    (character => character.characterName == itemHaveCharacter.characterName)
+                .itemList
+                .RemoveAll(item => item.itemId == itemId);
+            
+            _dataManager.SaveCharacter(_dataManager.currentCharacterList);
         }
 
         private void Insert(ItemButtonManager itemButton, Item item)
         {
-            itemButton.itemId = item.ItemId;
-            itemButton.itemNameText.text = item.ItemName;
-            itemButton.priceText.text = item.ItemPrice.ToString();
-            itemButton.priceInt = item.ItemPrice;
+            itemButton.itemId = item.itemId;
+            itemButton.itemNameText.text = item.itemName;
+            itemButton.priceText.text = item.itemPrice.ToString();
+            itemButton.priceInt = item.itemPrice;
+            itemButton.itemType = item.itemType;
         }
         
         private void Enroll()
         {
+            foreach (var equipItem in inventoryManager.selectedCharacter.itemList)
+            {
+                if (equipItem.itemType == itemType)
+                {
+                    return;
+                }
+            }
+
             foreach (var character in inventoryManager.dataManager.currentCharacterList)
             {
-                foreach (var item in character.ItemList)
+                foreach (var item in character.itemList)
                 {
-                    if (item.ItemId == itemId)
+                    if (item.itemId == itemId)
                     {
-                        if (inventoryManager.selectedCharacter.CharacterId == character.CharacterId) return;
+                        if (inventoryManager.selectedCharacter.characterId == character.characterId) return;
                         
                         Take(character, item);
                         return;
@@ -117,16 +141,16 @@ namespace Game.Window
                 }
             }
             
-            var currentItems = inventoryManager.selectedCharacter.ItemList;
+            var currentItems = inventoryManager.selectedCharacter.itemList;
             if (currentItems.Count >= inventoryManager.limitSlot) return;
             
-            currentItems.Add(new Item(marketManager.ownedItems.Find(i => i.ItemId == itemId)));
+            currentItems.Add(new Item(_dataManager.ownedItems.Find(i => i.itemId == itemId)));
 
             foreach (var slot in inventoryManager.slotList)
             {
                 if (slot.gameObject.activeSelf == false)
                 {
-                    var newItem = new Item(marketManager.ownedItems.Find(i => i.ItemId == itemId));
+                    var newItem = new Item(_dataManager.ownedItems.Find(i => i.itemId == itemId));
                     inventoryManager.equipItem.Add(newItem);
                     slot.gameObject.SetActive(true);
                     var slotButton = slot.GetComponent<ItemButtonManager>();
@@ -138,27 +162,42 @@ namespace Game.Window
 
         public void BuyOrSell()
         {
+            if (_dataManager.baseData.currentGold <= 0) return;
+            
             if (buttonType == ItemButtonType.Buy)
             {
-                if (marketManager.ownedItems.Count >= inventoryManager.itemFull)
+                if (_dataManager.ownedItems.Count >= inventoryManager.itemFull)
                 {
                     marketManager.inventoryFull.GetComponent<ModalWindowManager>().ModalWindowIn();
                     print("Inventory is full");
                     return;
                 }
-                
-                ChangeGold(ItemButtonType.Buy);
-                marketManager.ownedItems.Add(new Item(marketManager.testItemList.Find(i => i.ItemId == itemId)));
-                // marketManager.ShowItem(marketManager.sell, marketManager.ownedItems);
+
+                if (_dataManager.baseData.currentGold >= priceInt)
+                {
+                    ChangeGold(ItemButtonType.Buy);
+                    _dataManager.baseData.itemCount = _dataManager.baseData.itemCount + 1;
+                    _dataManager.SaveBaseData();
+                    var newItem = new Item(_dataManager.itemList.Find(i => i.itemName == itemNameText.text))
+                    {
+                        itemId = _dataManager.baseData.itemCount
+                    };
+                    _dataManager.ownedItems.Add(newItem);
+                    CloseOrOpen(false);
+                }
+                else
+                {
+                    sound.Play();
+                }
             }
             
             else if (buttonType == ItemButtonType.Sell)
             {
                 ChangeGold(ItemButtonType.Sell);
-                marketManager.ownedItems.RemoveAll(i => i.ItemId == itemId);
+                _dataManager.ownedItems.RemoveAll(i => i.itemId == itemId);
                 foreach (var character in inventoryManager.dataManager.currentCharacterList)
                 {
-                    character.ItemList.RemoveAll(i => i.ItemId == itemId);
+                    character.itemList?.RemoveAll(i => i.itemId == itemId);
                 }
 
                 foreach (var slot in inventoryManager.slotList)
@@ -166,11 +205,12 @@ namespace Game.Window
                     ReItem(slot.GetComponent<ItemButtonManager>());
                     slot.gameObject.SetActive(false);
                 }
+                
+                CloseOrOpen(false);
             }
             
-            CloseOrOpen(false);
-            
-            // marketManager.inventoryManager.ShowItem(marketManager.ownedItems);
+            _dataManager.SaveBaseData();
+            _dataManager.SaveOwnedItems();
         }
         
         void CloseOrOpen(bool active)
@@ -181,22 +221,22 @@ namespace Game.Window
 
         void ChangeGold(ItemButtonType type)
         {
-            int money = priceInt;
-            if (money == 0)
+            int price = priceInt;
+
+            if (price == 0)
             {
                 print("Price is missing");
                 return;
             }
-
             if (type == ItemButtonType.Buy)
             {
-                _dataManager.gold = _dataManager.gold - money; 
+                _dataManager.baseData.currentGold = _dataManager.baseData.currentGold - price; 
                 _dataManager.RenewalGold();
             }
             else if (type == ItemButtonType.Sell)
             {
-                money = money / marketManager.discount;
-                _dataManager.gold = _dataManager.gold + money; 
+                price = price / marketManager.discount;
+                _dataManager.baseData.currentGold = _dataManager.baseData.currentGold + price; 
                _dataManager.RenewalGold();
             }
         }

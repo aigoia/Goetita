@@ -275,7 +275,7 @@ namespace Game.MainGame
 
 		void DoByType()
 		{
-			if (_gameManager.currentPlayer.characterType == CharacterType.SwordMaster)
+			if (_gameManager.currentPlayer.characterType == CharacterType.Claymore)
 			{
 				if (skillState == SkillState.BaseCloseAttack || CheckSign("Enemy", _sword))
 				{
@@ -318,7 +318,7 @@ namespace Game.MainGame
 
 		void CheckByType()
 		{
-			if (_gameManager.currentPlayer.characterType == CharacterType.SwordMaster)
+			if (_gameManager.currentPlayer.characterType == CharacterType.Claymore)
 			{
 				if (_gameManager.doubleClose)
 				{

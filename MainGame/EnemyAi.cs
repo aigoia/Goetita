@@ -445,7 +445,7 @@ namespace Game.MainGame
                 var something = doSomething;
                 var oneMore = new WaitUntil(() => this.thisEnemy.currentVigor < something);
                 
-                if (this.thisEnemy.characterType == CharacterType.SwordMaster)
+                if (this.thisEnemy.characterType == CharacterType.Claymore)
                 {
                     var baseList = _areaCheck.BaseList(this.thisEnemy);
                     var doubleList = _areaCheck.DoubleList(this.thisEnemy, baseList);

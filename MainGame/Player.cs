@@ -11,7 +11,7 @@ namespace Game.MainGame
 {
 	public enum CharacterType
 	{
-		Default, SwordMaster, Ranger,
+		Default, Claymore, Ranger,
 	}
 
 	public enum GetHit
@@ -51,7 +51,7 @@ namespace Game.MainGame
 		public bool doubleBase = true;
 
 		public UserState userState = UserState.Non;
-		public CharacterType characterType = CharacterType.SwordMaster;
+		public CharacterType characterType = CharacterType.Claymore;
 		public int marked = 0;
 		public readonly int Mark = 2;
 		
@@ -66,7 +66,7 @@ namespace Game.MainGame
 		// deal
 		public int weaponDeal = 4;
 		public int baseDeal = 0;
-		public int plusDeal = 1;
+		public int plusDeal = 2;
 		
 		private Enemy _currentEnemy;
 		public int baseVigor = 2;
@@ -136,7 +136,7 @@ namespace Game.MainGame
 
 		bool CheckBaseAttack()
 		{
-			if (characterType != CharacterType.SwordMaster) return false;
+			if (characterType != CharacterType.Claymore) return false;
 				
 			foreach (var enemyDirection in GameUtility.EightDirections)
 			{
@@ -303,7 +303,7 @@ namespace Game.MainGame
 				icon.GetComponent<IconManager>().highlighted.SetActive(false);
 			}
 			
-			if (characterType == CharacterType.SwordMaster && _gameManager.inPlaceClose) CloseAttackUiCheck();
+			if (characterType == CharacterType.Claymore && _gameManager.inPlaceClose) CloseAttackUiCheck();
 			_playerUi.gameObject.SetActive(true);
 			round.SetActive(true);
 			_tail.SetActive(true);
@@ -324,7 +324,7 @@ namespace Game.MainGame
 		public void BaseCloseAttack()
 		{
 			_playerUi.UiSetActive(false);
-			if (characterType != CharacterType.SwordMaster) return;
+			if (characterType != CharacterType.Claymore) return;
 			print(_gameManager.currentPlayer.activeState);
 			
 			var currentEnemyList = new List<Enemy>();
@@ -670,7 +670,7 @@ namespace Game.MainGame
 			
 			if (_gameManager.currentPlayer != this)_playerUi.UiSetActive(false);
 
-			if (characterType == CharacterType.SwordMaster)
+			if (characterType == CharacterType.Claymore)
 			{
 
 			}

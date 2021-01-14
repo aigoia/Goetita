@@ -9,6 +9,7 @@ namespace Game.MainGame
 	public class ControllerManager : MonoBehaviour
 	{
 		public UnityEvent menuOn;
+		public UnityEvent endTurn;
 		private ModalManager _modalManager;
 		public GameManager gameManager;
 
@@ -18,10 +19,11 @@ namespace Game.MainGame
 			if (gameManager == null) gameManager = FindObjectOfType<GameManager>();
 		}
 
-		void Update () 
+		void Update()
 		{
 			OpenMenu();
 			PressTap();
+			EndTurn();
 		}
 
 		private void PressTap()
@@ -29,6 +31,14 @@ namespace Game.MainGame
 			if (Input.GetButtonDown("Tap"))
 			{
 				TapController();
+			}
+		}
+
+		void EndTurn()
+		{
+			if (Input.GetButtonDown("EndTurn"))
+			{
+				endTurn.Invoke();
 			}
 		}
 
