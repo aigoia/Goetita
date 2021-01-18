@@ -1,4 +1,6 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
+using Game.MainGame;
 using TMPro;
 using UnityEngine;
 
@@ -6,11 +8,15 @@ namespace Game.Data
 {
     public class CheatCode : MonoBehaviour
     {
+        public GameManager gameManager;
         public TMP_InputField cheat;
         public GameObject inputPanel;
         public GameObject test;
-        public GameObject win;
-    
+
+        private void Awake()
+        {
+            if (gameManager == null) gameManager = FindObjectOfType<GameManager>();
+        }
 
         private void Update()
         {
@@ -32,7 +38,14 @@ namespace Game.Data
                     if (cheat.text == "win")
                     {
                         waitEnter = false;
-                        win.SetActive(true);
+                        
+                        gameManager.victory.Invoke();
+                    }
+
+                    if (cheat.text == "lose")
+                    {
+                        waitEnter = false;
+                        gameManager.gameOver.Invoke();
                     }
 
                     inputPanel.SetActive(false);

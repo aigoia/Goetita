@@ -45,9 +45,8 @@ namespace Game.Window
                 _cityAreaManager.initCount -= 1;
                 _cityAreaManager.uiManager.ButtonOff();
                 _cityAreaManager.uiManager.ButtonOn(this);
-                
-                // remember where we are
                 _cityAreaManager.dataManager.SavePosition(position + _cityAreaManager.height);
+                
                 return;
             }
 
@@ -105,13 +104,13 @@ namespace Game.Window
                 {
                     LoseHp();
                     _cityAreaManager.dataManager.SaveAll();
+                    _cityAreaManager.dataManager.SavePosition(transform.position + _cityAreaManager.height);
                     return;
                 }
             
                 gameManager.mainCamera.Hungry(false);
                 _cityAreaManager.dataManager.RenewalGold();
-                
-
+                _cityAreaManager.dataManager.SavePosition(transform.position + _cityAreaManager.height);
             }
 
             void LoseHp()

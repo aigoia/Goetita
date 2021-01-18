@@ -17,8 +17,9 @@ namespace Game.MainGame
         [SerializeField] Transform tileNode;
         [SerializeField] GameObject boundaryObject;
         [SerializeField] GameObject boundaryBlock;
-        [SerializeField]GameObject tileObject;
+        [SerializeField] GameObject tileObject;
         public readonly Vector3 Box = new Vector3(1f, 1f, 1f);
+        readonly float ObjectPos = 0.12f;
 
         List<TileNode> _nodeList;
         public List<TileNode> NodeList => _nodeList;
@@ -32,11 +33,15 @@ namespace Game.MainGame
 
         PathFinding _pathFinding;
         public PathFinding PathFinding => _pathFinding;
-        public Transform mapGround;
-
+        
         GameManager _gameManager;
         EnemyAi _enemyAi;
         Shield _shield;
+
+        // map
+        public List<Map> mapList = new List<Map>();
+        public CurrentData currentData;
+        public Transform mapGround;
 
         void Awake()
         {   
@@ -47,6 +52,7 @@ namespace Game.MainGame
             if (boundary == null) boundary = transform.Find("Boundary");
             if (boardBoundary == null) boundary = transform.Find("BoardBoundary");
             if (tileNode == null) tileNode = transform.Find("TileNode");
+            if (currentData == null) currentData = FindObjectOfType<CurrentData>();
 
             MakeGround();
             MakeMap();
@@ -56,7 +62,17 @@ namespace Game.MainGame
 
         private void MakeGround()
         {
+            if (currentData == null) currentData = FindObjectOfType<CurrentData>();
+            if (currentData.currentMission == null) return;
             
+            foreach (var map in mapList)
+            {
+                if (currentData.currentMission.mapName == map.mapName)
+                {
+                    var mapObject = Instantiate(map, mapGround);
+                    mapObject.gameObject.SetActive(true);
+                }
+            }
         }
 
         [ContextMenu("Make Map")]
@@ -104,7 +120,7 @@ namespace Game.MainGame
 
         void MakeNode(int x, int y)
         {
-            var worldPos = new Vector3(x * GameUtility.interval, 0, y * GameUtility.interval);
+            var worldPos = new Vector3(x * GameUtility.interval, ObjectPos, y * GameUtility.interval);
             var node = Instantiate(tileObject, worldPos , tileObject.transform.rotation, tileNode);
             node.name = "TileNode(" + x + ", " +y + ")";
             var getNode = node.GetComponent<TileNode>();

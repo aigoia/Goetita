@@ -1,10 +1,23 @@
-﻿using UnityEngine;
+﻿using System;
+using Game.Data;
+using UnityEngine;
 
 namespace Game.Window
 {
     public class CharacterManager : MonoBehaviour
     {
         public float censorExtents = 1f;
+        public DataManager dataManager;
+
+        private void Awake()
+        {
+            if (dataManager == null) dataManager = FindObjectOfType<DataManager>();
+        }
+
+        private void Start()
+        {
+            transform.position = dataManager.whereData.currentPosition;
+        }
 
         [ContextMenu("WhereIam")]
         public CityArea WhereIam()
@@ -16,6 +29,7 @@ namespace Game.Window
             if (originArea == null) return null;
             return originArea;
         }
+        
         
         public CityArea WhereForm(Vector3 where)
         {

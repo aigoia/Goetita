@@ -67,6 +67,7 @@ namespace Game.Data
 		public Character testCharacter;
 		public BaseData baseData;
 		public WhereData whereData;
+		public CurrentData currentData;
 
 		public Vector3 initPosition = new Vector3(5, 0.5f, 15);
 
@@ -98,6 +99,7 @@ namespace Game.Data
 
 		private void Awake()
 		{
+			if (currentData == null) currentData = FindObjectOfType<CurrentData>();
 			if (inventoryManager == null) inventoryManager = FindObjectOfType<InventoryManager>();
 
 			currentCharacterList = LoadCharacter();
@@ -336,7 +338,7 @@ namespace Game.Data
 			var where = JsonUtility.FromJson<WhereData>(jsonData);
 			return where.currentPosition;
 		}
-
+		
 		public void RecruitSword()
 		{
 			var oldList = LoadCharacter();

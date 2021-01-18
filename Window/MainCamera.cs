@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System;
+using Game.Data;
+using UnityEngine;
 using UnityEngine.PostProcessing;
 
 namespace Game.Window
@@ -27,13 +29,24 @@ namespace Game.Window
         float verticalWeight = 1;
         float horizontalWeight = 1;
 
+        public DataManager dataManager;
+        private readonly Vector3 _bias = new Vector3( -5, 39.5f, -25);
+
         private void Awake()
         {
+            if (dataManager == null) dataManager = FindObjectOfType<DataManager>();
+            
             _desiredVector = new Vector3(horizontalWeight, 0f, verticalWeight);
             _leftRect = new Rect(-1, -1, screenEdgeBorder, Screen.height);
             _rightRect = new Rect(Screen.width - screenEdgeBorder, -1, screenEdgeBorder, Screen.height);
             _upRect = new Rect(-1, Screen.height - screenEdgeBorder + 1, Screen.width, screenEdgeBorder);
             _downRect = new Rect(-1, -1, Screen.width, screenEdgeBorder);
+        }
+
+        private void Start()
+        {
+            dataManager.LoadPosition();
+            transform.position = dataManager.whereData.currentPosition + _bias;
         }
 
         public void Hungry(bool hungry)

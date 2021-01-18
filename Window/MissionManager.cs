@@ -13,10 +13,14 @@ namespace Game.Window
         private void Awake()
         {
             if (dataManager == null) FindObjectOfType<DataManager>();
+            if (dataManager.currentData == null) dataManager.currentData = FindObjectOfType<CurrentData>();
         }
 
         public void GoToNodeMap()
         {
+            if (dataManager.currentData == null) dataManager.currentData = FindObjectOfType<CurrentData>();
+            dataManager.currentData.currentMission = dataManager.currentData.missionList[0];
+            
             var characters = dataManager.LoadCharacter();
             if (characters == null)
             {

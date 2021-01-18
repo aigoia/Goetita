@@ -96,9 +96,7 @@ namespace Game.MainGame
 			if (close == null) close = transform.Find("Close");
 			if (_cameraController == null)_cameraController = FindObjectOfType<CameraController>();
 			if (_board == null) _board = FindObjectOfType<Board>();
-			_enemyList = new List<Enemy>(FindObjectsOfType<Enemy>());
 			if (enemyAi == null) enemyAi = FindObjectOfType<EnemyAi>();
-			MakeActiveEnemyList(_enemyList, activeEnemyList);
 			if (effectManager == null) effectManager = GetComponent<EffectManager>();
 			if (soundManager == null) soundManager = FindObjectOfType<SoundManager>();
 			if (areaCheck == null) areaCheck = GetComponent<AreaCheck>();
@@ -109,6 +107,10 @@ namespace Game.MainGame
 
 		private void Start()
 		{
+			// make enemy list
+			_enemyList = new List<Enemy>(FindObjectsOfType<Enemy>());
+			MakeActiveEnemyList(_enemyList, activeEnemyList);
+			
 			Marked();
 		}
 

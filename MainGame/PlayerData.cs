@@ -13,8 +13,6 @@ namespace Game.MainGame
         public GameManager gameManager;
         public UIManager uiManager;
         public List<Vector3> initVectors = new List<Vector3>();
-        public int rewordGoldBase = 400;
-        public int rewordExpBase = 9;
         public Settings settings;
 
         private void Awake()
@@ -93,12 +91,25 @@ namespace Game.MainGame
             gameManager.playerList = new List<Player>(FindObjectsOfType<Player>());
         }
 
-        public void WinNormal()
+        public void LoseNormal()
         {
-            WinReword(rewordGoldBase, rewordExpBase);
+            if (settings.currentData == null) return;
+            
+            settings.currentData.currentMission = null;
         }
         
-        public void WinReword(int rewordGold = 0, int rewordExp = 0)
+        public void WinNormal()
+        {
+            if (settings.currentData == null) return;
+            if (settings.currentData.currentMission != null)
+            {
+                print("Gold : " + settings.currentData.currentMission.goldReward +", Exp : " + settings.currentData.currentMission.expReward);
+                WinReword(settings.currentData.currentMission.goldReward, settings.currentData.currentMission.expReward);   
+            }
+            settings.currentData.currentMission = null;
+        }
+
+        void WinReword(int rewordGold = 0, int rewordExp = 0)
         {
             settings.baseData.currentGold = settings.baseData.currentGold + rewordGold;
             settings.SaveBaseData();

@@ -89,6 +89,11 @@ namespace Game.Window
                 intList = GameUtility.RandomExtraction(cityAreaManager.cityAreaList.Count, accidents.Count);
             }
 
+            if (intList == null || where == null)
+            {
+                return;
+            }
+            
             for (int i = 0; i < accidents.Count; i++)
             {
                 if (intList[i] != where.id)

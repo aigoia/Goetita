@@ -15,10 +15,12 @@ namespace Game.Data
         public Vector3 initPosition = new Vector3(5, 0.5f, 15);
         public PlayerData playerData;
         public List<Item> ownedItems;
+        public CurrentData currentData;
 
         private void Awake()
         {
             if (playerData == null) playerData = FindObjectOfType<PlayerData>();
+            if (currentData == null) currentData = FindObjectOfType<CurrentData>();
         }
 
         private void Start()
