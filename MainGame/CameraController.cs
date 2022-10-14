@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Xml.Schema;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Serialization;
+using UnityEngine.PostProcessing;
 
 namespace Game.MainGame
 {
@@ -35,7 +32,7 @@ namespace Game.MainGame
 		Rect _downRect;
 		Vector3 _desiredVector;
 
-		float verticalWeight = 2;
+		float verticalWeight = 1;
 		float horizontalWeight = 1;
 		public Camera thisCamera;
 		public int area = 20;
@@ -66,6 +63,10 @@ namespace Game.MainGame
 		float _zMax = 0;
 		public int limit = 4;
 
+		public PostProcessingProfile baseColor;
+		public PostProcessingProfile markedColor;
+		public PostProcessingBehaviour postProcessing;
+		
 		void Awake()
 		{
 			if (_gameManager == null) _gameManager = FindObjectOfType<GameManager>(); 
@@ -105,6 +106,7 @@ namespace Game.MainGame
 
 		private void Start()
 		{
+			SetColor(Color.black);
 			CameraOut();
 			CameraIn();
 		}
@@ -115,8 +117,22 @@ namespace Game.MainGame
 			MouseController();
 			KeyboardController();
 			CheckPosition();
+			MouseMovement();
 		}
+		
+		void MouseMovement()
+        {
+            if (Input.GetMouseButton(2))
+            {
+                MoveScreen(MouseInputMovement);
+            }
 
+            if (Input.GetMouseButtonDown(1))
+            {
+                RotateButton(1);
+            }
+        }
+		
 		private void CheckPosition()
 		{
 			var position = transform.position;
@@ -133,23 +149,23 @@ namespace Game.MainGame
 
 			if (Input.GetKeyDown(keyCodeOut))
 			{
-				if (cameraZoomOut == maxCameraSize) return;
+				if (cameraZoomOut >= maxCameraSize) return;
 				CameraOut();
 			}
 			else if (Input.GetKeyDown(keyCodeIn))
 			{
-				if (cameraZoomOut == minCameraSize) return;
+				if (cameraZoomOut <= minCameraSize) return;
 				CameraIn();
 			}
 
 			if (Input.GetAxis("Mouse ScrollWheel") < 0)
 			{
-				if (cameraZoomOut == maxCameraSize) return;
+				if (cameraZoomOut >= maxCameraSize) return;
 				CameraOut();
 			}
 			else if (Input.GetAxis("Mouse ScrollWheel") > 0) 
 			{
-				if (cameraZoomOut == minCameraSize) return;
+				if (cameraZoomOut <= minCameraSize) return;
 				CameraIn();
 			}
 		}
@@ -191,16 +207,16 @@ namespace Game.MainGame
 			if (!useKeyboardInput) return;
 			if (_gameManager.somethingOn) return;
 
-			MoveScreen();
+			MoveScreen(KeyboardInput);
 			RotateButton(KeyboardRotate());
 		}
 
-		void MoveScreen()
+		void MoveScreen(Vector3 desiredMove)
 		{
 			if (!useMove) return;
 			if (currentClock == null) return;
 
-			Vector3 desiredMove = KeyboardInput;
+			// Vector3 desiredMove = KeyboardInput;
 			desiredMove *= keyboardMovementSpeed * Time.deltaTime;
 			desiredMove = currentClock.DesiredQuaternion * desiredMove;
 			desiredMove = _thisTransform.InverseTransformDirection(desiredMove);
@@ -254,8 +270,7 @@ namespace Game.MainGame
 			desiredMove.z *= _upRect.Contains(MouseInput) ? 1 : _downRect.Contains(MouseInput) ? -1 : 0;
 
 			if (desiredMove == Vector3.zero) return;
-			if (desiredMove == null) return;
-		
+
 			desiredMove *= screenEdgeMovementSpeed * Time.deltaTime;
 			desiredMove = currentClock.DesiredQuaternion * desiredMove;
 			desiredMove = _thisTransform.InverseTransformDirection (desiredMove);
@@ -283,8 +298,41 @@ namespace Game.MainGame
 					0f, 
 					Input.GetAxis("Vertical") * verticalWeight) 
 				: Vector3.zero;
-
+		
 		Vector2 MouseInput => Input.mousePosition;
+
+		Vector3 MouseInputMovement =>
+			new Vector3(
+				Input.GetAxis("Mouse X") * horizontalWeight,
+				0f,
+				Input.GetAxis("Mouse Y") * verticalWeight);
+
+		public void SetColor(Color setColor)
+		{
+			if (setColor == Color.red)
+			{
+				postProcessing.profile = markedColor;
+			}
+			else if (setColor == Color.black)
+			{
+				postProcessing.profile = baseColor;
+			}
+		}
+
+		public void CheckMark()
+		{
+			foreach (var player in _gameManager.playerList)
+			{
+				if (player.marked > 0)
+				{
+					print(player.name + " is marked");
+					SetColor(Color.red);
+					return;
+				}
+			}
+			
+			SetColor(Color.black);
+		}
 	}
 
 	public class Clockwise 

@@ -4,8 +4,10 @@ using UnityEngine;
 
 namespace Game.MainGame
 {
-    public class Board : MonoBehaviour {
+    public class Board : MonoBehaviour
+    {
 
+        public bool checkMap = true;
         public TileNode startNode;
         public List<TileNode> currentWay;
         List<TileNode> _currentBaseBoundary;
@@ -18,8 +20,9 @@ namespace Game.MainGame
         [SerializeField] GameObject boundaryObject;
         [SerializeField] GameObject boundaryBlock;
         [SerializeField] GameObject tileObject;
-        public readonly Vector3 Box = new Vector3(1f, 1f, 1f);
-        readonly float ObjectPos = 0.12f;
+        public readonly Vector3 box = new Vector3(1f, 1f, 1f);
+        readonly int _objectPos = 0;
+        public Vector3 boundaryPos = new Vector3(0, 0.08f, 0);
 
         List<TileNode> _nodeList;
         public List<TileNode> NodeList => _nodeList;
@@ -27,8 +30,8 @@ namespace Game.MainGame
         public LineRenderer line;
         public Vector3 lineVector = new Vector3(0, 0.03f, 0);
 
-        [SerializeField] private static int xSize = 32;
-        [SerializeField] private static int ySize = 32;
+        private static int xSize = 33;
+        private static int ySize = 33;
         public Vector2 boardSize = new Vector2(xSize, ySize);
 
         PathFinding _pathFinding;
@@ -38,13 +41,25 @@ namespace Game.MainGame
         EnemyAi _enemyAi;
         Shield _shield;
 
+        public GameObject testMap;
+        public bool test;
+
+        // public GameObject testMap;
+
         // map
+        public List<Map> initMapList = new List<Map>();
         public List<Map> mapList = new List<Map>();
         public CurrentData currentData;
-        public Transform mapGround;
-
+        public Map currentMap;
+        public GameObject currentObject;
+        public Transform mapGround; 
+        UIManager _uiManager;
+        
         void Awake()
-        {   
+        {
+            if (currentData == null) test = true;
+            if (testMap != null) testMap.SetActive(test);
+            
             if (line == null) line = transform.Find("Line").GetComponent<LineRenderer>();
             if (_pathFinding == null) _pathFinding = GetComponent<PathFinding>();
             if (_gameManager == null) _gameManager = FindObjectOfType<GameManager>();
@@ -53,26 +68,94 @@ namespace Game.MainGame
             if (boardBoundary == null) boundary = transform.Find("BoardBoundary");
             if (tileNode == null) tileNode = transform.Find("TileNode");
             if (currentData == null) currentData = FindObjectOfType<CurrentData>();
-
+            if (_uiManager == null) _uiManager = FindObjectOfType<UIManager>();
+            
+            SetCurrentMap();
             MakeGround();
             MakeMap();
             
             if (_nodeList == null) _nodeList = new List<TileNode>(FindObjectsOfType<TileNode>());
         }
 
+        void SetCurrentMap()
+        {
+            if (currentData == null) currentData = FindObjectOfType<CurrentData>();
+            
+            if (currentData == null)
+            {
+                for (int i = 0; i < mapGround.childCount; i++)
+                {
+                    if (mapGround.GetChild(i).gameObject.activeSelf)
+                    {
+                        currentMap = mapGround.GetChild(i).GetComponent<Map>();
+                        break;
+                    }
+                }
+            }
+            
+            else
+            {
+                // check 
+                if (checkMap)
+                {
+                    foreach (var map in mapList)
+                    {
+                        foreach (var mission in currentData.missionList)
+                        {
+                            if (map.mapName == mission.mapName)
+                            {
+                                if (map.difficultLevel == mission.difficultLevel)
+                                {
+                                        
+                                }
+                                else
+                                {
+                                    print("Discord difficult! : " + map.mapName + "(" + map.difficultLevel +")");
+                                }        
+                            }
+                        }
+                    }                    
+                }
+
+                
+                foreach (var map in mapList)
+                {
+                    if (currentData.currentMission.mapName == map.mapName)
+                    {
+                        currentMap = map;
+                    }
+                }
+            }
+
+            if (currentMap == null)
+            {
+                currentMap = mapGround.GetChild(0).GetComponent<Map>();
+            }
+
+            boardSize = currentMap.mapSize;
+            if (boardSize == Vector2.zero)
+            {
+                boardSize = new Vector2(xSize, ySize);
+            }
+        }
+
         private void MakeGround()
         {
             if (currentData == null) currentData = FindObjectOfType<CurrentData>();
+            if (currentData == null) return;
             if (currentData.currentMission == null) return;
             
-            foreach (var map in mapList)
-            {
-                if (currentData.currentMission.mapName == map.mapName)
-                {
-                    var mapObject = Instantiate(map, mapGround);
-                    mapObject.gameObject.SetActive(true);
-                }
-            }
+            // foreach (var map in mapList)
+            // {
+            //     map.gameObject.SetActive(false);
+            // }
+            
+            var mapObject = Instantiate(currentMap, mapGround);
+            print(currentMap.mapName + "(" + currentMap.difficultLevel + ")");
+
+            GameObject newObject;
+            (newObject = mapObject.gameObject).SetActive(true);
+            currentObject = newObject;
         }
 
         [ContextMenu("Make Map")]
@@ -99,19 +182,19 @@ namespace Game.MainGame
                     {
                         if (direction == Vector3.forward)
                         {
-                            Instantiate(boundaryBlock, node.transform.position + direction, Quaternion.identity, boardBoundary);
+                            Instantiate(boundaryBlock, node.transform.position + direction + boundaryPos, Quaternion.identity, boardBoundary);
                         }
                         else if (direction == Vector3.left)
                         {
-                            Instantiate(boundaryBlock, node.transform.position + direction, Quaternion.Euler(0f, 90f, 0f), boardBoundary);
+                            Instantiate(boundaryBlock, node.transform.position + direction + boundaryPos, Quaternion.Euler(0f, 90f, 0f), boardBoundary);
                         }
                         else if (direction == Vector3.back)
                         {
-                            Instantiate(boundaryBlock, node.transform.position + direction, Quaternion.identity, boardBoundary);
+                            Instantiate(boundaryBlock, node.transform.position + direction + boundaryPos, Quaternion.identity, boardBoundary);
                         }
                         else if (direction == Vector3.right)
                         {
-                            Instantiate(boundaryBlock, node.transform.position + direction, Quaternion.Euler(0f, 90f, 0f), boardBoundary);
+                            Instantiate(boundaryBlock, node.transform.position + direction + boundaryPos, Quaternion.Euler(0f, 90f, 0f), boardBoundary);
                         }
                     }
                 }
@@ -120,7 +203,7 @@ namespace Game.MainGame
 
         void MakeNode(int x, int y)
         {
-            var worldPos = new Vector3(x * GameUtility.interval, ObjectPos, y * GameUtility.interval);
+            var worldPos = new Vector3(x * GameUtility.interval, _objectPos, y * GameUtility.interval);
             var node = Instantiate(tileObject, worldPos , tileObject.transform.rotation, tileNode);
             node.name = "TileNode(" + x + ", " +y + ")";
             var getNode = node.GetComponent<TileNode>();
@@ -216,6 +299,7 @@ namespace Game.MainGame
             {
                 node.gameObject.layer = LayerMask.NameToLayer("Node");
                 node.tileStyle = TileStyle.Normal;
+                node.skillState = SkillState.Non;
                 node.shieldStyle = ShieldStyle.Default;
                 
                 if (_gameManager.currentPlayer != null ) SetTileStyle(node, _gameManager.currentPlayer.transform.position);
@@ -256,19 +340,19 @@ namespace Game.MainGame
                 {
                     if (direction == Vector3.forward)
                     {
-                        Instantiate(boundaryBlock, node.transform.position + direction, Quaternion.identity, boundary.GetChild(0));
+                        Instantiate(boundaryBlock, node.transform.position + direction + boundaryPos, Quaternion.identity, boundary.GetChild(0));
                     }
                     else if (direction == Vector3.left)
                     {
-                        Instantiate(boundaryBlock, node.transform.position + direction, Quaternion.Euler(0f, 90f, 0f), boundary.GetChild(0));
+                        Instantiate(boundaryBlock, node.transform.position + direction + boundaryPos, Quaternion.Euler(0f, 90f, 0f), boundary.GetChild(0));
                     }
                     else if (direction == Vector3.back)
                     {
-                        Instantiate(boundaryBlock, node.transform.position + direction, Quaternion.identity, boundary.GetChild(0));
+                        Instantiate(boundaryBlock, node.transform.position + direction + boundaryPos, Quaternion.identity, boundary.GetChild(0));
                     }
                     else if (direction == Vector3.right)
                     {
-                        Instantiate(boundaryBlock, node.transform.position + direction, Quaternion.Euler(0f, 90f, 0f), boundary.GetChild(0));
+                        Instantiate(boundaryBlock, node.transform.position + direction + boundaryPos, Quaternion.Euler(0f, 90f, 0f), boundary.GetChild(0));
                     }
                 }
             }
@@ -356,42 +440,42 @@ namespace Game.MainGame
         
         void SetEnemyTileStyle(TileNode node, Vector3 pos = new Vector3())
         {
-            if (Physics.CheckBox(node.transform.position, Box, Quaternion.identity, LayerMask.GetMask("Obstacle", "Player", "Enemy")))
+            if (Physics.CheckBox(node.transform.position, box, Quaternion.identity, LayerMask.GetMask("Obstacle", "Player", "Enemy")))
             {
                 node.tileStyle = TileStyle.NonWalkable;
 
-                if (Physics.CheckBox(node.transform.position, Box, Quaternion.identity, LayerMask.GetMask("MoveBaseBlock")))
+                if (Physics.CheckBox(node.transform.position, box, Quaternion.identity, LayerMask.GetMask("MoveBaseBlock")))
                 {
                     _currentObstacleBoundary.Add(node);
                 }
-                else if (Physics.CheckBox(node.transform.position, Box, Quaternion.identity, LayerMask.GetMask("MoveDoubleBlock")))
+                else if (Physics.CheckBox(node.transform.position, box, Quaternion.identity, LayerMask.GetMask("MoveDoubleBlock")))
                 { 
                     _currentObstacleBoundary.Add(node);
                 }
             }
-            else if (Physics.CheckBox(node.transform.position, Box, Quaternion.identity, LayerMask.GetMask("MoveBaseArea")))
+            else if (Physics.CheckBox(node.transform.position, box, Quaternion.identity, LayerMask.GetMask("MoveBaseArea")))
             {
                 node.tileStyle = TileStyle.OneArea;
                 node.gameObject.layer = LayerMask.NameToLayer("BaseNode");
             }
-            else if (Physics.CheckBox(node.transform.position, Box, Quaternion.identity, LayerMask.GetMask("MoveBaseBlock")))
+            else if (Physics.CheckBox(node.transform.position, box, Quaternion.identity, LayerMask.GetMask("MoveBaseBlock")))
             {
                 node.areaBoundary = BoundaryArea.OneBlock;
                 _currentBaseBoundary.Add(node);
 
-                 if (Physics.CheckBox(node.transform.position, Box, Quaternion.identity, LayerMask.GetMask("MoveDoubleArea")))
+                 if (Physics.CheckBox(node.transform.position, box, Quaternion.identity, LayerMask.GetMask("MoveDoubleArea")))
                 {
                     node.tileStyle = TileStyle.TwoArea;
                     node.gameObject.layer = LayerMask.NameToLayer("DoubleNode");
                 }
             }
-            else if (Physics.CheckBox(node.transform.position, Box, Quaternion.identity, LayerMask.GetMask("MoveDoubleArea")))
+            else if (Physics.CheckBox(node.transform.position, box, Quaternion.identity, LayerMask.GetMask("MoveDoubleArea")))
             {
                 node.tileStyle = TileStyle.TwoArea;
                 node.gameObject.layer = LayerMask.NameToLayer("DoubleNode");
             }
 
-            else if (Physics.CheckBox(node.transform.position, Box, Quaternion.identity, LayerMask.GetMask("MoveDoubleBlock")))
+            else if (Physics.CheckBox(node.transform.position, box, Quaternion.identity, LayerMask.GetMask("MoveDoubleBlock")))
             {
                 node.areaBoundary = BoundaryArea.TowBlock;
                 _currentDoubleBoundary.Add(node);
@@ -408,55 +492,55 @@ namespace Game.MainGame
 
         void SetTileStyle(TileNode node, Vector3 pos = new Vector3())
         {
-            if (Physics.CheckBox(node.transform.position, Box, Quaternion.identity, LayerMask.GetMask("Obstacle", "Player", "Enemy")))
+            if (Physics.CheckBox(node.transform.position, box, Quaternion.identity, LayerMask.GetMask("Obstacle", "Player", "Enemy")))
             {
                 node.tileStyle = TileStyle.NonWalkable;
 
-                if (Physics.CheckBox(node.transform.position, Box, Quaternion.identity, LayerMask.GetMask("MoveBaseBlock")))
+                if (Physics.CheckBox(node.transform.position, box, Quaternion.identity, LayerMask.GetMask("MoveBaseBlock")))
                 {
                     _currentObstacleBoundary.Add(node);
                 }
-                else if (Physics.CheckBox(node.transform.position, Box, Quaternion.identity, LayerMask.GetMask("MoveDoubleBlock")))
+                else if (Physics.CheckBox(node.transform.position, box, Quaternion.identity, LayerMask.GetMask("MoveDoubleBlock")))
                 {
                     _currentObstacleBoundary.Add(node);
                 }
             }
             else if (CheckObstacle(node, pos))
             {
-                if (Physics.CheckBox(node.transform.position, Box, Quaternion.identity, LayerMask.GetMask("MoveBaseBlock")))
+                if (Physics.CheckBox(node.transform.position, box, Quaternion.identity, LayerMask.GetMask("MoveBaseBlock")))
                 {
                     node.tileStyle = TileStyle.HideOneArea;
                     _currentObstacleBoundary.Add(node);
                 }
-                else if (Physics.CheckBox(node.transform.position, Box, Quaternion.identity, LayerMask.GetMask("MoveDoubleBlock")))
+                else if (Physics.CheckBox(node.transform.position, box, Quaternion.identity, LayerMask.GetMask("MoveDoubleBlock")))
                 {
                     node.tileStyle = TileStyle.HideOneArea;
                     _currentObstacleBoundary.Add(node);
                 }
             }
-            else if (Physics.CheckBox(node.transform.position, Box, Quaternion.identity, LayerMask.GetMask("MoveBaseArea")))
+            else if (Physics.CheckBox(node.transform.position, box, Quaternion.identity, LayerMask.GetMask("MoveBaseArea")))
             {
                 node.tileStyle = TileStyle.OneArea;
                 node.gameObject.layer = LayerMask.NameToLayer("BaseNode");
             }
-            else if (Physics.CheckBox(node.transform.position, Box, Quaternion.identity, LayerMask.GetMask("MoveBaseBlock")))
+            else if (Physics.CheckBox(node.transform.position, box, Quaternion.identity, LayerMask.GetMask("MoveBaseBlock")))
             {
                 node.areaBoundary = BoundaryArea.OneBlock;
                 _currentBaseBoundary.Add(node);
 
-                if (Physics.CheckBox(node.transform.position, Box, Quaternion.identity, LayerMask.GetMask("MoveDoubleArea")))
+                if (Physics.CheckBox(node.transform.position, box, Quaternion.identity, LayerMask.GetMask("MoveDoubleArea")))
                 {
                     node.tileStyle = TileStyle.TwoArea;
                     node.gameObject.layer = LayerMask.NameToLayer("DoubleNode");
                 }
             }
-            else if (Physics.CheckBox(node.transform.position, Box, Quaternion.identity, LayerMask.GetMask("MoveDoubleArea")))
+            else if (Physics.CheckBox(node.transform.position, box, Quaternion.identity, LayerMask.GetMask("MoveDoubleArea")))
             {
                 node.tileStyle = TileStyle.TwoArea;
                 node.gameObject.layer = LayerMask.NameToLayer("DoubleNode");
             }
 
-            else if (Physics.CheckBox(node.transform.position, Box, Quaternion.identity, LayerMask.GetMask("MoveDoubleBlock")))
+            else if (Physics.CheckBox(node.transform.position, box, Quaternion.identity, LayerMask.GetMask("MoveDoubleBlock")))
             {
                 node.areaBoundary = BoundaryArea.TowBlock;
                 _currentDoubleBoundary.Add(node);

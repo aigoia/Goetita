@@ -37,22 +37,26 @@ namespace Game.Window
         
         private void Start()
         {
-         
-            dataManager.currentCharacterList = dataManager.LoadCharacter();
-            		
-            
+            // dataManager.RenewalCharacter();
             _selectedCharacterList = null;
             _billGold = 0;
 
-            for (int i = 0; i < dataManager.currentCharacterList.Count; i++)
+            for (int i = 0; i < dataManager.CurrentCharacterList.Count; i++)
             {
                 if (i <= buttonList.Count)
                 {
                     buttonList[i].SetActive(true);
-                    buttonList[i].GetComponent<HealButton>().characterId = dataManager.currentCharacterList[i].characterId;
-                    hpBarList[i].characterId = dataManager.currentCharacterList[i].characterId;
+                    string loadCharacterName = dataManager.CurrentCharacterList[i].characterName;
+                    buttonList[i].GetComponent<HealButton>().character.characterName = dataManager.CurrentCharacterList[i].characterName;
+                    hpBarList[i].characterName = dataManager.CurrentCharacterList[i].characterName;
                     activeButtonList.Add(buttonList[i].GetComponent<HealButton>());
-                    activeButtonList[i].character = dataManager.currentCharacterList[i];
+                    activeButtonList[i].character = dataManager.CurrentCharacterList[i];
+                    
+                    var profileButtonImage = dataManager.profileImageList.Find(image => image.name == loadCharacterName).transform
+                        .Find("100x100").GetComponent<Image>().sprite;
+
+                    buttonList[i].transform.Find("ProfileImage").GetComponent<Image>().sprite =
+                        profileButtonImage;
                 }
             }
             
@@ -80,7 +84,7 @@ namespace Game.Window
 
             foreach (var button in selectedButtons)
             {
-                selectedCharacters.Add(dataManager.currentCharacterList.Find(i => i.characterId == button.characterId));
+                selectedCharacters.Add(dataManager.CurrentCharacterList.Find(i => i.characterName == button.character.characterName));
             }
             
             // make bill
@@ -105,6 +109,8 @@ namespace Game.Window
 
         public void Pay()
         {
+            var newCharacters = dataManager.CurrentCharacterList;
+            
             if (_selectedCharacterList == null) return;
             
             // pay gold
@@ -113,21 +119,22 @@ namespace Game.Window
             dataManager.RenewalGold();
             
             // heal character
-            foreach (var currentCharacter in dataManager.currentCharacterList)
+            foreach (var currentCharacter in newCharacters)
             {
-                if (_selectedCharacterList.Exists(i => i.characterId == currentCharacter.characterId))
+                if (_selectedCharacterList.Exists(i => i.characterName == currentCharacter.characterName))
                 {
                     currentCharacter.currentHp = currentCharacter.baseHp;
                 }
             }
             
-            dataManager.SaveCharacter(dataManager.currentCharacterList);
+            dataManager.SaveCharacter(newCharacters);
             
-            dataManager.RenewalCharacter();
+            // dataManager.RenewalCharacter();
             FillHp();
             
             _selectedCharacterList = null;
             _billGold = 0;
+            bill.text = 0.ToString();
             ActiveOff();
         }
 
@@ -144,19 +151,19 @@ namespace Game.Window
             }
         }
         
-        public void SetInformation(int characterId)
+        public void SetInformation(string characterFindName)
         {
-            var selectedCharacter = dataManager.currentCharacterList.Find(i => i.characterId == characterId);
+            var selectedCharacter = dataManager.CurrentCharacterList.Find(i => i.characterName == characterFindName);
             if (selectedCharacter == null) return;
 
             characterName.text = selectedCharacter.characterName;
             level.text = selectedCharacter.level.ToString();
         
-            if (selectedCharacter.type == CharacterClass.Ranger)
+            if (selectedCharacter.classType == CharacterClass.Ranger)
             {
                 characterClass.text = "Ranger";
             }
-            if (selectedCharacter.type == CharacterClass.Claymore)
+            if (selectedCharacter.classType == CharacterClass.Claymore)
             {
                 characterClass.text = "Claymore";
             }

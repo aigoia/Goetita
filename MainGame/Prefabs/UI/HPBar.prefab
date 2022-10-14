@@ -34,7 +34,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 50, y: 50}
+  m_SizeDelta: {x: 50, y: 5}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &222296792949390428
 CanvasRenderer:
@@ -107,6 +107,8 @@ MonoBehaviour:
   player: {fileID: 0}
   enemy: {fileID: 0}
   healthBar: {fileID: 114330993735376618}
+  blockY: 0
+  blockZ: 0
   bonus: 2
   blockObject: {fileID: 1840334364275114, guid: 2613b544413d8415ea4000e0625a3fe1,
     type: 3}

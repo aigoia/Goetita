@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using Game.Data;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -20,44 +20,77 @@ namespace Game.Window
         public IconBase iconBase;
         public Accident assignedAccident = null;
         public int id;
-        private int cycle = 4;
-        private int eventCount = 4;
-        private int marketCount = 1;
-        private int hospitalCount = 1;
-
+        public int cycle = 4;
+        public int eventCount = 3;
+        public int marketCount = 1;
+        public int hospitalCount = 1;
+        public int recruitCount = 1;
+        private MeshRenderer _cityMesh;
+        private MeshRenderer _baseMesh;
+        
         private void Awake()
         {
             if (_cityAreaManager == null) _cityAreaManager = FindObjectOfType<CityAreaManager>();
             if (gameManager == null) gameManager = FindObjectOfType<GameManager>();
             if (accidentManager == null) accidentManager = FindObjectOfType<AccidentManager>();
             if (_characterManager == null) _characterManager = FindObjectOfType<CharacterManager>();
+
+            if (_cityMesh == null) _cityMesh = transform.Find("City").gameObject.GetComponent<MeshRenderer>();
+            if (_baseMesh == null) _baseMesh = transform.Find("Base").gameObject.GetComponent<MeshRenderer>();
         }
-    
+
+        private void OnMouseEnter()
+        {
+            if (EventSystem.current.IsPointerOverGameObject()) return;
+
+            var originArea = _characterManager.WhereIam();
+            
+            if (originArea == null)
+            {
+                _cityMesh.material = _cityAreaManager.pointMaterial;
+                gameManager.hover.Play();
+                return;
+            }
+            
+            if (originArea.connectedNodeList.Exists(i => i.name == this.name))
+            {
+                _cityMesh.material = _cityAreaManager.pointMaterial;
+                gameManager.hover.Play();
+                return;
+            }
+        }
+
+        private void OnMouseExit()
+        {
+            _cityMesh.material = _cityAreaManager.baseMaterial;
+        }
+
         private void OnMouseUp()
         {
             if (gameManager.mainCanvas.activeSelf == false) print("MainCanvas is off");
             if (EventSystem.current.IsPointerOverGameObject()) return;
 
-            if (_cityAreaManager.initCount >= 1)
+            var originArea = _characterManager.WhereIam();
+            
+            if (originArea == null)
             {
                 var position = this.transform.position;
                 iTween.MoveTo(_cityAreaManager.mainCharacter, position + _cityAreaManager.height, _cityAreaManager.moveSpeed); 
-                _cityAreaManager.initCount -= 1;
+                // gameManager.dataManager.baseData.initCount -= 1;
                 _cityAreaManager.uiManager.ButtonOff();
                 _cityAreaManager.uiManager.ButtonOn(this);
                 _cityAreaManager.dataManager.SavePosition(position + _cityAreaManager.height);
                 
                 return;
             }
-
-            var originArea = _characterManager.WhereIam();
-            if (originArea == null) return;
-        
+            
             // add turn
             if (originArea.connectedNodeList.Exists(i => i.name == this.name))
             {
                 iTween.MoveTo(_cityAreaManager.mainCharacter, this.transform.position + _cityAreaManager.height, _cityAreaManager.moveSpeed);
-
+                
+                gameManager.move.Play();
+                
                 PlusTurnDate();
                 SpendMovingCost();
                 // accidentManager.RemoveSelectedAccident();
@@ -65,34 +98,39 @@ namespace Game.Window
                 _cityAreaManager.uiManager.ButtonOff();
                 _cityAreaManager.uiManager.ButtonOn(this);
             }
+            
 
             void SpendMovingCost()
             {
-                var movingCost = 20;
+                var movingCost = _cityAreaManager.movingCost[0];
 
-                if (_cityAreaManager.dataManager.currentCharacterList.Count <= 2)
+                if (_cityAreaManager.dataManager.CurrentCharacterList.Count <= 1)
                 {
-                    movingCost = 20;
+                    movingCost = _cityAreaManager.movingCost[0];
                 }
-                else if (_cityAreaManager.dataManager.currentCharacterList.Count == 3)
+                else if (_cityAreaManager.dataManager.CurrentCharacterList.Count == 2)
                 {
-                    movingCost = 30;
+                    movingCost = _cityAreaManager.movingCost[1];
                 }
-                else if (_cityAreaManager.dataManager.currentCharacterList.Count == 4)
+                else if (_cityAreaManager.dataManager.CurrentCharacterList.Count == 3)
                 {
-                    movingCost = 50;
+                    movingCost = _cityAreaManager.movingCost[2];
                 }
-                else if (_cityAreaManager.dataManager.currentCharacterList.Count == 5)
+                else if (_cityAreaManager.dataManager.CurrentCharacterList.Count == 4)
                 {
-                    movingCost = 90;
+                    movingCost = _cityAreaManager.movingCost[3];
                 }
-                else if (_cityAreaManager.dataManager.currentCharacterList.Count == 6)
+                else if (_cityAreaManager.dataManager.CurrentCharacterList.Count == 5)
                 {
-                    movingCost = 160;
+                    movingCost = _cityAreaManager.movingCost[4];
+                }
+                else if (_cityAreaManager.dataManager.CurrentCharacterList.Count == 6)
+                {
+                    movingCost = _cityAreaManager.movingCost[5];
                 }
                 else
                 {
-                    movingCost = 200;
+                    movingCost = _cityAreaManager.movingCost[0];
                 }
 
                 if (_cityAreaManager.dataManager.baseData.currentGold >= movingCost)
@@ -115,35 +153,41 @@ namespace Game.Window
 
             void LoseHp()
             {
-                foreach (var character in _cityAreaManager.dataManager.currentCharacterList)
+                gameManager.mainCamera.Hungry(true);
+
+                var characters = _cityAreaManager.dataManager.CurrentCharacterList;
+                
+                foreach (var character in characters)
                 {
-                    if (character.currentHp > 0)
+                    if (character.currentHp > 1)
                     {
                         if (character.currentHp > 3)
                         {
                             character.currentHp = (int) character.currentHp / 2;
                         }
-                        else if (character.currentHp <= 3)
+                        if (character.currentHp <= 3)
                         {
                             character.currentHp = character.currentHp - 1;
-                        }    
+                        }
                     }
 
-                    if (HpCheck())
-                    {
-                        return;
-                    }
+                    // if (HpCheck())
+                    // {
+                    //     return;
+                    // }
                     else
                     {
                         gameManager.mainCamera.Hungry(true);
                         print(character.characterName +" lose HP to " + character.currentHp);
                     }
                 }
+                
+                _cityAreaManager.dataManager.SaveCharacter(characters);
             }
 
             bool HpCheck()
             {
-                foreach (var character in _cityAreaManager.dataManager.currentCharacterList)
+                foreach (var character in _cityAreaManager.dataManager.CurrentCharacterList)
                 {
                     if (character.currentHp > 0)
                     {
@@ -166,7 +210,7 @@ namespace Game.Window
             // Make Accident
             if (remainder == 0)
             {
-                accidentManager.InputAccident(eventCount, marketCount, hospitalCount);
+                accidentManager.InputAccident(eventCount, marketCount, hospitalCount, recruitCount);
             }
         
         }

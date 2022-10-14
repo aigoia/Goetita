@@ -32,8 +32,8 @@ namespace Game.MainGame
 		Default, HalfShield, PerfectShield, Block,
 	}
 
-	public class TileNode : MonoBehaviour {
-
+	public class TileNode : MonoBehaviour
+	{
 		Action _useSkill;
 		public float distance;
 		// public Player targetPlayer;
@@ -173,9 +173,9 @@ namespace Game.MainGame
 			{
 				if (Physics.Raycast(transform.position + sign.origin, direction, checkRange*1.5f, LayerMask.GetMask(mask)))
 				{
-					sign.transformDictionary [direction].position = transform.position;
+					sign.transformDictionary [direction].position = transform.position + _board.boundaryPos;
 					sign.isSign = true;
-					_gameManager.soundManager.PlayUi(SoundUi.Hover);
+					// _gameManager.soundManager.PlaySystem(SoundSystem.Hover);
 				}
 			}
 		}
@@ -217,15 +217,19 @@ namespace Game.MainGame
 		void ShowPathOut()
 		{
 			if (tileStyle != TileStyle.Normal) return;
-
-			var way = _board.PathFinding.GreedPathFinding(_board.startNode, this, _board.NodeList, PathFindingStyle.Out);
 			
-			if (way == null) return;
+			if (tileStyle == TileStyle.Normal)
+			{
+				var way = _board.PathFinding.GreedPathFinding(_board.startNode, this, _board.NodeList, PathFindingStyle.Out);
 			
-			_gameManager.round.position = way[0].transform.position + _gameManager.roundVector;
+				if (way == null) return;
+				if (way[0] == null) return;
 			
-			_board.currentWay = way;
-			MakeWayLine(way);
+				_gameManager.round.position = way[0].transform.position + _gameManager.roundVector;
+			
+				_board.currentWay = way;
+				MakeWayLine(way);	
+			}
 		}
 
 		void MakeWayLine (List<TileNode> wayList)
@@ -283,16 +287,24 @@ namespace Game.MainGame
 					{
 						if (_gameManager.currentPlayer.currentVigor > 0)
 						{
+							var way = _board.PathFinding.GreedPathFinding(_board.startNode, this, _board.NodeList);
+							if (way == null) return;
+							
 							Moving(true);
 							StartCoroutine(AfterMoving(true));
+							skillState = SkillState.Non;
 						}
 					}
 					else
 					{
 						if (_gameManager.currentPlayer.currentVigor > 1) 
 						{ 
+							var way = _board.PathFinding.GreedPathFinding(_board.startNode, this, _board.NodeList);
+							if (way == null) return;
+							
 							Moving(true); 
 							StartCoroutine(AfterMoving(true));
+							skillState = SkillState.Non;
 						}
 					}
 				}
@@ -326,7 +338,10 @@ namespace Game.MainGame
 					{
 						if (tileStyle == TileStyle.OneArea || tileStyle == TileStyle.TwoArea)
 						{
-							MakeSign("Enemy", _sword);	
+							var way = _board.PathFinding.GreedPathFinding(_board.startNode, this, _board.NodeList);
+							if (way == null) return;
+							
+							MakeSign("Enemy", _sword);
 						}
 					}
 				}
@@ -334,14 +349,14 @@ namespace Game.MainGame
 				{
 					if (_gameManager.currentPlayer.currentVigor > 1)
 					{
-						if (tileStyle == TileStyle.OneArea)
-						{
-							MakeSign("Enemy", _sword);	
-						}
+						var way = _board.PathFinding.GreedPathFinding(_board.startNode, this, _board.NodeList);
+						if (way == null) return;
+						
+						MakeSign("Enemy", _sword);	
+						
 					}
 				}
 			}
-            				
 			else if (_gameManager.currentPlayer.characterType == CharacterType.Ranger)
 			{
 				if (tileStyle == TileStyle.NonWalkable)
@@ -368,6 +383,7 @@ namespace Game.MainGame
 		
 		void OnMouseEnter()
 		{
+			// print(Coordinate);
 			if (EventSystem.current.IsPointerOverGameObject()) return;
 			if (_gameManager.somethingOn) return;
 			if (_gameManager.currentPlayer == null) return;
@@ -409,6 +425,7 @@ namespace Game.MainGame
 			DoByType();
 			// OutShied();
 			OutSign(_sword);
+			_gameManager.Marked();
 		}
 
 		IEnumerator AfterMoving(bool close)
@@ -430,7 +447,7 @@ namespace Game.MainGame
 			if (_board.startNode == null) return;
 			if (_board.currentWay == null) return;
 			
-			_gameManager.soundManager.PlayUi(SoundUi.Click);
+			// _gameManager.soundManager.PlaySystem(SoundSystem.Click);
 			
 			var roundTile = _board.NodeList.Find(i => i.Coordinate == GameUtility.Coordinate(_gameManager.round.transform.position));
 			
@@ -438,6 +455,7 @@ namespace Game.MainGame
 			{
 				_gameManager.currentPlayer.MovingSkill(roundTile);
 				_gameManager.currentPlayer.playerMove.IndicateUnit(_board.currentWay, skill);
+
 				_board.currentWay = null;
 			}
 		}

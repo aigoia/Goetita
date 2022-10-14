@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
 using UnityEngine;
 
 public enum AreaOrder
@@ -45,7 +44,7 @@ namespace Game.MainGame
             _gameManager.Marked();
 
             StartCoroutine(StartEnemies());
-            StartCoroutine(ForcedEnding());
+            // StartCoroutine(ForcedEnding());
         }
 
         IEnumerator ForcedEnding()
@@ -79,6 +78,8 @@ namespace Game.MainGame
                 var otherWalk = enemy.UnitWalk(AreaOrder.Base, WalkOrder.Random, null);
                 if (otherWalk) enemy.currentVigor = emptyVigor;
             }
+            
+            _gameManager.Marked();
         }
 
         bool CheckMarked()
@@ -127,6 +128,8 @@ namespace Game.MainGame
                      } 
                  }
              }
+             
+             _gameManager.Marked();
         }
 
         void ChaseCloseStrike(List<Player> moveList, Enemy enemy)
@@ -168,6 +171,8 @@ namespace Game.MainGame
                 if (way) enemy.currentVigor = emptyVigor;
                 // thisEnemy.Damage(targetPlayer);
             }
+            
+            _gameManager.Marked();
         }
 
         void DoubleRangeStrike(List<Player> doubleList, Enemy enemy)
@@ -180,12 +185,15 @@ namespace Game.MainGame
                 
                 if (_areaCheck.CanRange(player, enemy))
                 {
-                    enemy.currentVigor = emptyVigor;
-                    enemy.Damage(player);
                     StartCoroutine(AttackRange(player, enemy));
+                    
+                    if (enemy.currentVigor != emptyVigor) player.currentHp = enemy.Damage(player, player.currentHp);
+                    enemy.currentVigor = emptyVigor;
                     break;
                 }
             }
+            
+            _gameManager.Marked();
         }
 
         void MoveRangeStrike(List<Player> moveList, Enemy enemy)
@@ -223,10 +231,14 @@ namespace Game.MainGame
             if (targetPlayer != null && targetTileNode != null)
             {
                 print("ShootRange");
-                enemy.currentVigor = emptyVigor;
-                enemy.Damage(targetPlayer);
+                
                 StartCoroutine(ShootRange(targetPlayer, targetTileNode, enemy));
+                
+                if (enemy.currentVigor != emptyVigor) targetPlayer.currentHp = enemy.Damage(targetPlayer, targetPlayer.currentHp);
+                enemy.currentVigor = emptyVigor;
             }
+            
+            _gameManager.Marked();
         }
 
         void BaseCloseStrike(List<Player> baseList, Enemy enemy)
@@ -245,11 +257,15 @@ namespace Game.MainGame
                     if (shortNode == null) continue;
                     
                     if (shortNode != null) StartCoroutine(AttackClose(player, enemy, shortNode));
+                    
+                    if (enemy.currentVigor != emptyVigor) player.currentHp = enemy.Damage(player, player.currentHp);
                     enemy.currentVigor = emptyVigor;
-                    enemy.Damage(player);
                     break;
                 }
             }
+            
+            enemy.currentVigor = emptyVigor;
+            _gameManager.Marked();
         }
 
         void DoubleCloseStrike(List<Player> doubleList, Enemy enemy)
@@ -272,12 +288,16 @@ namespace Game.MainGame
                         if (shortNode == null) continue;
                         
                         if (shortNode != null) StartCoroutine(AttackClose(player, enemy, shortNode));
+                        
+                        if (enemy.currentVigor != emptyVigor) player.currentHp = enemy.Damage(player, player.currentHp);
                         enemy.currentVigor = emptyVigor;
-                        enemy.Damage(player);
                         break;
                     }
                 }
             }
+            
+            enemy.currentVigor = emptyVigor;
+            _gameManager.Marked();
         }
 
         void DoubleCloseObstacle(List<Player> doubleList, Enemy enemy)
@@ -314,7 +334,7 @@ namespace Game.MainGame
                                 var playNearNode = _areaCheck.NearNode(player);
                                 if (playNearNode == null) continue;
                                 
-                                foreach (var nearNode in playNearNode)
+                                foreach (var nearNode in playNearNode.ToList())
                                 {
                                     if (nearNode == null) continue;
                                     
@@ -336,8 +356,9 @@ namespace Game.MainGame
                 if (targetPlayer != null && middleNode != null && endTileNode != null)
                 {
                     StartCoroutine(RushClose(targetPlayer, enemy, middleNode, endTileNode));
+                    
+                    if (enemy.currentVigor != emptyVigor) targetPlayer.currentHp = enemy.Damage(targetPlayer, targetPlayer.currentHp);
                     enemy.currentVigor = emptyVigor;
-                    enemy.Damage(targetPlayer);
                 }
                 else
                 {
@@ -345,6 +366,8 @@ namespace Game.MainGame
                     RandomBase(enemy);
                 }
             }
+            
+            _gameManager.Marked();
         }
 
         void BaseCloseObstacle(List<Player> baseList, Enemy enemy)
@@ -380,7 +403,7 @@ namespace Game.MainGame
                                 var playNearNode = _areaCheck.NearNode(player);
                                 if (playNearNode == null) continue;
                                 
-                                foreach (var nearNode in playNearNode)
+                                foreach (var nearNode in playNearNode.ToList())
                                 {
                                     if (nearNode == null) continue;
                                     
@@ -402,8 +425,9 @@ namespace Game.MainGame
                 if (targetPlayer != null && middleNode != null && endTileNode != null)
                 {
                     StartCoroutine(RushClose(targetPlayer, enemy, middleNode, endTileNode));
+                    
+                    if (enemy.currentVigor != emptyVigor) targetPlayer.currentHp = enemy.Damage(targetPlayer, targetPlayer.currentHp);
                     enemy.currentVigor = emptyVigor;
-                    enemy.Damage(targetPlayer);
                 }
                 else
                 {
@@ -411,6 +435,8 @@ namespace Game.MainGame
                     RandomBase(enemy);
                 }
             }
+            
+            _gameManager.Marked();
         }
         
         IEnumerator StartEnemies()
@@ -529,9 +555,16 @@ namespace Game.MainGame
                     // there was a null bug
                     if (this.thisEnemy != null)
                     {
-                        while (this.thisEnemy.activeState == ActiveState.Moving)
+                        while (thisEnemy != null) 
                         {
-                            yield return null;
+                            if (this.thisEnemy.activeState == ActiveState.Moving)
+                            {
+                                yield return null;
+                            }
+                            else
+                            {
+                                break;
+                            }
                         }
                     }
                     
@@ -573,7 +606,8 @@ namespace Game.MainGame
                     yield return null;
                 }
             }
-
+            
+            gameOver = _gameManager.CheckGameOver();
             if (!gameOver) _gameManager.EnemyTurnEnding();
         }
 
@@ -632,6 +666,7 @@ namespace Game.MainGame
             }
             
             enemy.currentVigor = emptyVigor;
+            _gameManager.Marked();
         }
 
         IEnumerator ShootRange(Player player, TileNode selectedNode, Enemy enemy)
@@ -648,13 +683,15 @@ namespace Game.MainGame
             {
                 print("ShootRange");
                 enemy.RangeAttackByEnemy(player);
-                enemy.currentVigor = emptyVigor;
             }
 
             while (enemy.buyHit == BuyHit.BuyHit)
             { 
                 yield return null;
             }
+            
+            enemy.currentVigor = emptyVigor;
+            _gameManager.Marked();
         }
         
         IEnumerator AttackRange(Player player, Enemy enemy)
@@ -666,6 +703,9 @@ namespace Game.MainGame
             { 
                 yield return null;
             }
+            
+            enemy.currentVigor = emptyVigor;
+            _gameManager.Marked();
         }
 
         IEnumerator AttackClose(Player player, Enemy enemy, TileNode shortNode)
@@ -688,9 +728,12 @@ namespace Game.MainGame
             }
 
             while (enemy.buyHit == BuyHit.BuyHit)
-            { 
+            {
                 yield return null;
             }
+            
+            enemy.currentVigor = emptyVigor;
+            _gameManager.Marked();
         }
         
         private TileNode ShortNode (Vector2 startPos ,List<TileNode> nodeList)

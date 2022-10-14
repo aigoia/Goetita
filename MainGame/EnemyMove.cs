@@ -5,19 +5,21 @@ using UnityEngine;
 namespace Game.MainGame
 {
     public class EnemyMove : MonoBehaviour {
-        private const EaseType BaseEase = EaseType.linear;
-        public float moveSpeed = 0.279f;
-        public float turnSpeed = 0.0279f;
+        
+        // private const EaseType BaseEase = EaseType.linear;
+        public float moveNormalSpeed = 0.28f;
+        public float moveSlowSpeed = 0.30f;
+        public float turnSpeed = 0.0f;
 
-        private static float waitTime = 2f;
+        static readonly float waitTime = 2f;
         readonly WaitForSeconds _waiting = new WaitForSeconds(waitTime);
 
-        private GameManager _gameManager;
+        GameManager _gameManager;
         Enemy _enemy;
         Board _board;
         Animator _animator;
         CameraController _cameraController;
-        private static readonly int Running = Animator.StringToHash("Running");
+        static readonly int Running = Animator.StringToHash("Running");
 
         void Awake()
         {
@@ -28,24 +30,7 @@ namespace Game.MainGame
             if (_animator == null) _animator = GetComponent<Animator>();
         }
 
-        void MoveUnit(Vector3 destinationPos, float delayTime = 0f)
-        {
-            StartCoroutine(MoveRoutine (destinationPos, delayTime));
-        }
-
-        List<Vector3> MakeTransform(List<TileNode> way){
-
-            var transformList = new List<Vector3>();
-
-            foreach (var node in way)
-            {
-                transformList.Add(GameUtility.CoordinateToTransform (node.Coordinate));
-            }
-
-            return transformList;
-        }
-        
-        // start
+        // entrance
         public void IndicateUnit(List<TileNode> way, AreaOrder areaOrder, WalkOrder walkOrder)
         {
             int spendVigor;
@@ -89,16 +74,34 @@ namespace Game.MainGame
 
             _animator.SetBool(Running, true);
 
-            // do
+            var wayCount = 0;
             if (way != null)
+            {
+                var nCount = way.Count - 1;
+                // do
                 foreach (var destination in way)
                 {
-                    MoveUnit(destination);
+                    if (wayCount == 0)
+                    {
+                        MoveUnit(destination, moveSlowSpeed,0, EaseType.easeInSine);    
+                    }
+                    else if (wayCount == nCount)
+                    {
+                        MoveUnit(destination, moveSlowSpeed,0, EaseType.easeOutSine);
+                    }
+                    else
+                    {
+                        MoveUnit(destination, moveNormalSpeed,0, EaseType.linear);
+                    }
+                    
                     while (_enemy.activeState == ActiveState.Moving)
                     {
                         yield return null;
                     }
+
+                    wayCount += 1;
                 }
+            }
 
             if (walkOrder == WalkOrder.Rush)
             {
@@ -114,12 +117,12 @@ namespace Game.MainGame
             _enemy.currentVigor -= spendVigor;
         }
 
-        IEnumerator MoveRoutine(Vector3 destinationPos, float delayTime) 
+        IEnumerator MoveRoutine(Vector3 destinationPos, float moveSpeed, float delayTime, EaseType moveType = EaseType.linear) 
         {
             _enemy.activeState = ActiveState.Moving;
 
-            gameObject.MoveTo(destinationPos, moveSpeed, delayTime, BaseEase);
-            gameObject.LookTo(destinationPos, turnSpeed, delayTime, BaseEase);
+            gameObject.MoveTo(destinationPos, moveSpeed, delayTime, moveType);
+            gameObject.LookTo(destinationPos, turnSpeed, delayTime, moveType);
 
             while (Vector3.Distance(destinationPos, transform.position) > 0.01f) 
             {
@@ -129,7 +132,26 @@ namespace Game.MainGame
             iTween.Stop(gameObject);
             transform.position = destinationPos;
         
+            // _gameManager.SingleMarked(_enemy);
+            
             _enemy.activeState = ActiveState.NotAnything;
+        }
+        
+        void MoveUnit(Vector3 destinationPos, float moveSpeed, float delayTime, EaseType moveType)
+        {
+            StartCoroutine(MoveRoutine (destinationPos, moveSpeed, delayTime, moveType));
+        }
+
+        List<Vector3> MakeTransform(List<TileNode> way){
+
+            var transformList = new List<Vector3>();
+
+            foreach (var node in way)
+            {
+                transformList.Add(GameUtility.CoordinateToTransform (node.Coordinate));
+            }
+
+            return transformList;
         }
     }
 }

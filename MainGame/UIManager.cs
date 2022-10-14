@@ -12,20 +12,22 @@ namespace Game.MainGame
 		public List<BarNode> barList = new List<BarNode>();
 		[SerializeField] Color32 playerColor = new Color32(128, 224, 224, 255);
 		[SerializeField] Color32 enemyColor = new Color32(224, 128, 224, 255);
-
+		
+		
 		void Awake()
 		{
 			if (_gameManager == null) _gameManager = GetComponent<GameManager>();
 			if (canvas) canvas = FindObjectOfType<MainCanvas>().transform;
 		}
-
-		void Start()
-		{
-			
-		}
-
+		
 		public void InitSetting()
 		{
+			foreach (var barNode in barList)
+			{
+				Destroy(barNode.BarObject);
+			}
+			barList = new List<BarNode>();
+			
 			foreach (var player in _gameManager.activePlayerList)
             {
             	MakeHpBar(player, playerColor);

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using TMPro;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -22,8 +20,12 @@ namespace Game.MainGame
 		void Update()
 		{
 			OpenMenu();
-			PressTap();
-			EndTurn();
+
+			if (gameManager.turnState == Turn.PlayerTurn)
+			{
+				PressTap();
+				EndTurn();	
+			}
 		}
 
 		private void PressTap()

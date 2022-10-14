@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace Game.Window
 {
-    public class CharacterSelect : MonoBehaviour {
-
+    public class CharacterSelect : MonoBehaviour
+    {
         public List<GameObject> activeList = new List<GameObject>();
         public List<GameObject> buttonList = new List<GameObject>();
         public List<CharacterButton> activeButtonList = new List<CharacterButton>();
@@ -21,26 +21,62 @@ namespace Game.Window
 
         private void Start()
         {
-            for (int i = 0; i < dataManager.currentCharacterList.Count; i++)
+            Setting();
+        }
+
+        void Setting()
+        {
+            for (int i = 0; i < dataManager.CurrentCharacterList.Count; i++)
             {
                 if (i <= buttonList.Count)
                 {
                     buttonList[i].SetActive(true);
-                    buttonList[i].GetComponent<CharacterButton>().characterId = dataManager.currentCharacterList[i].characterId;
-                    hpBarList[i].characterId = dataManager.currentCharacterList[i].characterId;
+                    // buttonList[i].GetComponent<CharacterButton>().character.characterName =
+                    //     dataManager.CurrentCharacterList[i].characterName;
+                    // hpBarList[i].characterName = dataManager.currentCharacterList[i].characterName;
+                    hpBarList[i].characterName = dataManager.CurrentCharacterList[i].characterName;
                     activeButtonList.Add(buttonList[i].GetComponent<CharacterButton>());
-                    activeButtonList[i].character = dataManager.currentCharacterList[i];
+                    // activeButtonList[i].character = dataManager.CurrentCharacterList[i];
                 }
             }
-            
+
             FillHp();
+            
+            
         }
 
-        public void FillHp()
+        public void ReSetHp()
+        {
+            for (int i = 0; i < dataManager.CurrentCharacterList.Count; i++)
+            {
+                if (i <= buttonList.Count)
+                {
+                    buttonList[i].SetActive(true);
+                    // buttonList[i].GetComponent<CharacterButton>().character.characterName =
+                    //     dataManager.CurrentCharacterList[i].characterName;
+                    hpBarList[i].characterName = dataManager.CurrentCharacterList[i].characterName;
+                    activeButtonList.Add(buttonList[i].GetComponent<CharacterButton>());
+                    // activeButtonList[i].character = dataManager.CurrentCharacterList[i];
+                }
+            }
+
+            ReFillHp();
+        }
+        
+
+        void FillHp()
         {
             foreach (var hpBar in hpBarList)
             {
                 hpBar.MakeHp();
+            }
+        }
+        
+        void ReFillHp()
+        {
+            foreach (var hpBar in hpBarList)
+            {
+                hpBar.RemakeHp();
             }
         }
 

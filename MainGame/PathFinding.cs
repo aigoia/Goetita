@@ -171,7 +171,7 @@ namespace Game.MainGame
 				limit--;
 			}
 
-			print("There is no way");
+			print(gameObject.name + "There is no way");
 			return null;
 		}
 	}

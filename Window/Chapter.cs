@@ -5,14 +5,13 @@ namespace Game.Window
 {
     public class Chapter : MonoBehaviour
     {
-        public MissionManager missionManager;
+        public CardManager cardManager;
         public DataManager dataManager;
         
         private void Awake()
         {
             if (dataManager == null) FindObjectOfType<DataManager>();
-            if (missionManager == null) FindObjectOfType<MissionManager>();
+            if (cardManager == null) FindObjectOfType<CardManager>();
         }
-
     }
 }

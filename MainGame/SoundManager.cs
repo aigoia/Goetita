@@ -1,35 +1,45 @@
-﻿using System;
+﻿using Game.Menu;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace Game.MainGame
 {
 	public enum Sound
 	{
-		Sword, Gun, EnergyGun,
+		Sword, Gun, EnergyGun, Impact, OneShot,
 	}
 
-	public enum SoundUi
+	public enum SoundSystem
 	{
-		Hover, Click
+		Hover, Click, Open,
 	}
 	
 	public class SoundManager : MonoBehaviour
 	{
+		public AudioManager audioManager;
+		
 		[Header("Sound")]
 		public AudioClip sword;
+		public AudioClip impact;
 		public AudioClip gun;
+		public AudioClip gunOneShot;
 		public AudioClip energyGun;
 		private static AudioSource _audioSource;
 
-		[Header("UI")] 
+		[Header("System")] 
 		public AudioClip hover;
 		public AudioClip click;
+		public AudioClip open;
 		
 
 		private void Awake()
 		{
 			_audioSource = GetComponent<AudioSource>();
+			if (audioManager == null) audioManager = FindObjectOfType<AudioManager>();
+		}
+		
+		void Start()
+		{
+			if (audioManager != null) audioManager.PlaySound();
 		}
 
 		public void PlaySound(Sound sound)
@@ -38,9 +48,18 @@ namespace Game.MainGame
 			{
 				_audioSource.PlayOneShot(sword);
 			}
+
+			if (sound == Sound.Impact)
+			{
+				_audioSource.PlayOneShot(impact);
+			}
 			else if (sound == Sound.Gun)
 			{
 				_audioSource.PlayOneShot(gun);
+			}
+			else if (sound == Sound.OneShot)
+			{
+				_audioSource.PlayOneShot(gunOneShot);
 			}
 			else if (sound == Sound.EnergyGun)
 			{
@@ -48,16 +67,20 @@ namespace Game.MainGame
 			}
 		}
 
-		public void PlayUi(SoundUi sound)
-		{
-			if (sound == SoundUi.Hover)
-			{
-				_audioSource.PlayOneShot(hover);
-			}
-			else if (sound == SoundUi.Click)
-			{
-				_audioSource.PlayOneShot(click);
-			}
-		}
+		// public void PlaySystem(SoundSystem sound)
+		// {
+		// 	if (sound == SoundSystem.Hover)
+		// 	{
+		// 		_audioSource.PlayOneShot(hover);
+		// 	}
+		// 	else if (sound == SoundSystem.Click)
+		// 	{
+		// 		_audioSource.PlayOneShot(click);
+		// 	}
+		// 	else if (sound == SoundSystem.Open)
+		// 	{
+		// 		_audioSource.PlayOneShot(open);
+		// 	}
+		// }
 	}
 }

@@ -1,6 +1,6 @@
-﻿using System;
-using Game.Data;
+﻿using Game.Data;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Game.Window
 {
@@ -11,12 +11,14 @@ namespace Game.Window
         public bool isSelected = false;
         public GameObject active;
         public Character character;
-        public int characterId;
+        public Image image;
+        
 
         private void Awake()
         {
             if (healManager == null) FindObjectOfType<HealManager>();
             if (active == null) transform.Find("Active");
+            if (image == null) transform.Find("ProfileImage");
         }
         
         public void OnClick()
@@ -24,7 +26,7 @@ namespace Game.Window
             isSelected = !isSelected;
             active.SetActive(isSelected);
             
-            healManager.SetInformation(characterId);
+            healManager.SetInformation(character.characterName);
         }
     }
 }

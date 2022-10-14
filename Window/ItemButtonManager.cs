@@ -1,9 +1,13 @@
 ﻿using System;
 using Dark_UI.Scripts;
 using Game.Data;
-using Michsky.UI.Dark;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
+using System.Collections;
+using System.Collections.Generic;
+using Game.MainGame;
+using UnityEngine.EventSystems;
 
 namespace Game.Window
 {
@@ -17,15 +21,18 @@ namespace Game.Window
         public AudioSource sound;
         public ItemButtonType buttonType = ItemButtonType.Buy;
         public float invokeTime = 0.3f;
-        
+        [SerializeField]
+        [Range(0.4f, 10f)]
+        public float fadeTime = 1f;
+
         public MarketManager marketManager;
         public InventoryManager inventoryManager;
         DataManager _dataManager;
-        
+
         public Transform background;
         public Transform icon;
         public Transform highlighted;
-        public Transform itemName;
+        public Transform itemNameTransform;
         public TextMeshProUGUI itemNameText;
         public Transform price;
         public TextMeshProUGUI priceText;
@@ -33,8 +40,21 @@ namespace Game.Window
         public Transform button;
         public int itemId;
         public ItemType itemType;
+        public CharacterClass detailType;
+        public ItemConsumable itemConsumable;
         public String hasIt = " has it";
+        public TextMeshProUGUI actTextNormal;
+        public TextMeshProUGUI actTextHighlighted;
+        public TextMeshProUGUI quantity;
+        public bool unEquip = false;
 
+        [ContextMenu("SetAct")]
+        public void SetAct()
+        {
+           actTextNormal = transform.Find("Buttons").Find("Active").Find("Normal").Find("Text").GetComponent<TextMeshProUGUI>();
+           actTextHighlighted = transform.Find("Buttons").Find("Active").Find("Highlighted").Find("Text").GetComponent<TextMeshProUGUI>();
+        }
+        
         private void Awake()
         {
             if (_dataManager == null) _dataManager = FindObjectOfType<DataManager>();
@@ -48,76 +68,144 @@ namespace Game.Window
             }
         }
 
-        private void ReItem(ItemButtonManager itemButton)
+        public void Test()
         {
-            itemButton.itemId = 0;
-            itemButton.itemNameText.text = "Default";
-            itemButton.priceInt = 0;
-            itemButton.priceText.text = "0";
+            print("Test");
         }
-
-        public void Equip()
-        {
-            if (buttonType == ItemButtonType.Slot)
-            {
-                _dataManager.currentCharacterList.Find
-                        (character => character.characterName == inventoryManager.selectedCharacter.characterName)
-                    .itemList
-                    .RemoveAll(item => item.itemId == itemId);
-                inventoryManager.equipManager.ResetSlot(itemId);
-                ReItem(this);
-                if (sound != null) sound.Play();
-                gameObject.SetActive(false);
-            }
-            else if (buttonType == ItemButtonType.Inventory)
-            {
-                Enroll();
-            }
-            
-            _dataManager.SaveCharacter(_dataManager.currentCharacterList);
-        }
-
-        private void Take(Data.Character itemHaveCharacter, Item currentItem)
-        {
-            // Appear
-            var currentItems = _dataManager.currentCharacterList.Find
-                    (character => character.characterName == inventoryManager.selectedCharacter.characterName)
-                .itemList;
-            if (currentItems.Count >= inventoryManager.limitSlot) return;
-                    
-            currentItems.Add(new Item(_dataManager.ownedItems.Find(i => i.itemId == currentItem.itemId)));
         
-            foreach (var slot in inventoryManager.slotList)
+        public void Use()
+        {
+            var currentCharacters = _dataManager.CurrentCharacterList;
+            
+            print("Click");
+            if (itemConsumable == ItemConsumable.Equip)
             {
-                if (slot.gameObject.activeSelf == false)
+                if (buttonType == ItemButtonType.Slot)
                 {
-                    inventoryManager.equipItem.Add(new Item(_dataManager.ownedItems.Find(i => i.itemId == currentItem.itemId)));
-                    slot.gameObject.SetActive(true);
-                    var slotButton = slot.GetComponent<ItemButtonManager>();
-                    Insert(slotButton, currentItem);
-                    break;
+                    // currentCharacters.Find
+                    //         (character => character.characterName == inventoryManager.selectedCharacter.characterName)
+                    //     .itemList
+                    //     .RemoveAll(item => item.itemId == itemId);
+                    inventoryManager.selectedCharacter.itemList.RemoveAll(item => item.itemId == itemId);
+                    SaveCharacter(currentCharacters);
+                    
+                    inventoryManager.buttonManager.ResetSlot(itemId);
+                    _dataManager.gameManager.ReItem(this);
+                    // if (sound != null) sound.Play();
+                    inventoryManager.ShowStats();
+                    gameObject.SetActive(false);
+                    
+                    // _dataManager.SaveCharacter(currentCharacters);
+                    
+                }
+                else if (buttonType == ItemButtonType.Inventory)
+                {
+                    Enroll(currentCharacters);
                 }
             }
+            else if (itemConsumable == ItemConsumable.Consume)
+            {
+                print("Consume!");
+                if (itemNameText.text == "Memory")
+                {
+                    inventoryManager.selectedCharacter.exp += _dataManager.ownedItems.Find(
+                        i => i.itemName == "Memory").baseInt;
+                    // if (sound != null) sound.Play(); 
+                    SaveCharacter(currentCharacters);
+                    // consume memory
+                    var newItems = new List<Item>();
                     
-            // Disappear
-            _dataManager.currentCharacterList.Find
-                    (character => character.characterName == itemHaveCharacter.characterName)
-                .itemList
-                .RemoveAll(item => item.itemId == itemId);
+                    int countInit = GameUtility.CountItem(_dataManager.ownedItems, _dataManager.ownedItems.Find(
+                        i => i.itemName == "Memory"));
+                    countInit = countInit - 1;
+                    int count = countInit;
+                    foreach (var item in _dataManager.ownedItems)
+                    {
+                        if (item.itemName != "Memory")
+                        {
+                            newItems.Add(item);
+                        }
+                        else if (item.itemName == "Memory")
+                        {
+                            if (count != 0)
+                            {
+                                newItems.Add(item);
+                                count -= 1;
+                            }
+                        }
+                    }
+
+                    _dataManager.ownedItems = newItems;
+                    _dataManager.SaveOwnedItems();
+                    
+                    if (countInit <= 0)
+                    {
+                        inventoryManager.ShowOwnedItem();
+                    }
+                    else
+                    {
+                        quantity.text = countInit.ToString();
+                    }
+
+                    inventoryManager.InitLevelExp();
+                    _dataManager.LevelCheck(true);
+                    print(inventoryManager.selectedCharacter.characterName +" use memory and exp is " + inventoryManager.selectedCharacter.exp);
+                }
+            }
+            else
+            {
+                print("Item use style is Non!");    
+            }
             
-            _dataManager.SaveCharacter(_dataManager.currentCharacterList);
+            inventoryManager.ShowOwnedItem();
+            // _dataManager.SaveCharacter(currentCharacters);
         }
 
-        private void Insert(ItemButtonManager itemButton, Item item)
+        void SaveCharacter(List<Character> currentCharacters)
         {
-            itemButton.itemId = item.itemId;
-            itemButton.itemNameText.text = item.itemName;
-            itemButton.priceText.text = item.itemPrice.ToString();
-            itemButton.priceInt = item.itemPrice;
-            itemButton.itemType = item.itemType;
+            var newCharacters = new List<Character>(); 
+            foreach (var character in currentCharacters)
+            {
+                newCharacters.Add(character.characterName == inventoryManager.selectedCharacter.characterName
+                    ? inventoryManager.selectedCharacter
+                    : character);
+            }
+            _dataManager.SaveCharacter(newCharacters);
         }
+
+        // private void Take(Data.Character itemHaveCharacter, Item currentItem, List<Character> currentCharacterList)
+        // {
+        //     // Appear
+        //     var currentItems = currentCharacterList.Find
+        //             (character => character.characterName == inventoryManager.selectedCharacter.characterName)
+        //         .itemList;
+        //     if (currentItems.Count >= inventoryManager.limitSlot) return;
+        //             
+        //     currentItems.Add(new Item(_dataManager.ownedItems.Find(i => i.itemId == currentItem.itemId)));
+        //
+        //     foreach (var slot in inventoryManager.slotList)
+        //     {
+        //         if (slot.gameObject.activeSelf == false)
+        //         {
+        //             inventoryManager.equipItem.Add(new Item(_dataManager.ownedItems.Find(i => i.itemId == currentItem.itemId)));
+        //             slot.gameObject.SetActive(true);
+        //             var slotButton = slot.GetComponent<ItemButtonManager>();
+        //             _dataManager.gameManager.Insert(slotButton, currentItem);
+        //             break;
+        //         }
+        //     }
+        //             
+        //     // Disappear
+        //     currentCharacterList.Find
+        //             (character => character.characterName == itemHaveCharacter.characterName)
+        //         .itemList
+        //         .RemoveAll(item => item.itemId == itemId);
+        //     
+        //     _dataManager.SaveCharacter(currentCharacterList);
+        //     inventoryManager.ShowOwnedItem();
+        // }
         
-        private void Enroll()
+        private void Enroll(List<Character> characters)
         {
             foreach (var equipItem in inventoryManager.selectedCharacter.itemList)
             {
@@ -126,20 +214,28 @@ namespace Game.Window
                     return;
                 }
             }
-
-            foreach (var character in inventoryManager.dataManager.currentCharacterList)
+            
+            if (detailType != CharacterClass.Non)
             {
-                foreach (var item in character.itemList)
+                if (detailType != inventoryManager.selectedCharacter.classType)
                 {
-                    if (item.itemId == itemId)
-                    {
-                        if (inventoryManager.selectedCharacter.characterId == character.characterId) return;
-                        
-                        Take(character, item);
-                        return;
-                    }
+                    return;
                 }
             }
+
+            // foreach (var character in characters)
+            // {
+            //     foreach (var item in character.itemList)
+            //     {
+            //         if (item.itemId == itemId)
+            //         {
+            //             if (inventoryManager.selectedCharacter.characterName == character.characterName) return;
+            //             
+            //             Take(character, item, characters);
+            //             return;
+            //         }
+            //     }
+            // }
             
             var currentItems = inventoryManager.selectedCharacter.itemList;
             if (currentItems.Count >= inventoryManager.limitSlot) return;
@@ -154,55 +250,162 @@ namespace Game.Window
                     inventoryManager.equipItem.Add(newItem);
                     slot.gameObject.SetActive(true);
                     var slotButton = slot.GetComponent<ItemButtonManager>();
-                    Insert(slotButton, newItem);
+                    _dataManager.gameManager.Insert(slotButton, newItem);
+
+                    SaveCharacter(characters);
                     return;
                 }
             }
+            
+            inventoryManager.ShowOwnedItem();
         }
 
         public void BuyOrSell()
         {
             if (_dataManager.baseData.currentGold <= 0) return;
+            print("Click");
             
             if (buttonType == ItemButtonType.Buy)
             {
-                if (_dataManager.ownedItems.Count >= inventoryManager.itemFull)
+                var consumableCount = 0;
+                foreach (var item in _dataManager.ownedItems)
                 {
-                    marketManager.inventoryFull.GetComponent<ModalWindowManager>().ModalWindowIn();
+                    if (item.itemConsumable == ItemConsumable.Consume)
+                    {
+                        consumableCount = consumableCount + 1;
+
+                    }
+                }
+                // print(consumableCount);
+                var ownedItemCount = _dataManager.ownedItems.Count - consumableCount + 1;
+                print(ownedItemCount);
+                if (ownedItemCount >= inventoryManager.inventoryList.Count)
+                {
+                    // marketManager.inventoryFull.GetComponent<ModalWindowManager>().ModalWindowIn();
+                    marketManager.inventoryFull.gameObject.SetActive(true);
                     print("Inventory is full");
                     return;
                 }
-
+                
+                print(_dataManager.baseData.currentGold);
+                print(priceInt);
                 if (_dataManager.baseData.currentGold >= priceInt)
                 {
                     ChangeGold(ItemButtonType.Buy);
-                    _dataManager.baseData.itemCount = _dataManager.baseData.itemCount + 1;
+                    
+                    // input index
+                    while (_dataManager.ownedItems.Exists(i => i.itemId == _dataManager.baseData.itemCount))
+                    {
+                        _dataManager.baseData.itemCount = _dataManager.baseData.itemCount + 1;    
+                    }
                     _dataManager.SaveBaseData();
-                    var newItem = new Item(_dataManager.itemList.Find(i => i.itemName == itemNameText.text))
+                    
+                    var newItem = new Item(_dataManager.baseItemList.Find(i => i.itemName == itemNameText.text))
                     {
                         itemId = _dataManager.baseData.itemCount
                     };
+                    print(newItem.itemName + "(" + newItem.itemConsumable + ")");
                     _dataManager.ownedItems.Add(newItem);
+
+                    var cityArea = _dataManager.marketManager.characterManager.WhereIam();
+                    print(cityArea.name);
+
+                    // remove one item
+                    var oldItemList = cityArea.assignedAccident.marketItem;
+                    cityArea.assignedAccident.marketItem = new List<Item>();
+                    var itemNumber = 0;
+                    foreach (var item in oldItemList)
+                    {
+                        if (item.itemName != newItem.itemName)
+                        {
+                            cityArea.assignedAccident.marketItem.Add(item);    
+                        }
+                        else
+                        {
+                            if (itemNumber == 0)
+                            {
+                                itemNumber = 1;
+                                continue;
+                            }
+                            else
+                            {
+                                _dataManager.ownedItems.Add(item);
+                            }
+                        }
+                    }
+
                     CloseOrOpen(false);
                 }
                 else
                 {
-                    sound.Play();
+                    marketManager.noMoney.gameObject.SetActive(true);
+                    // sound.Play();
                 }
             }
             
             else if (buttonType == ItemButtonType.Sell)
             {
                 ChangeGold(ItemButtonType.Sell);
+                
+                // remove one item
+                // var oldItemList = _dataManager.ownedItems;
+
                 _dataManager.ownedItems.RemoveAll(i => i.itemId == itemId);
-                foreach (var character in inventoryManager.dataManager.currentCharacterList)
-                {
-                    character.itemList?.RemoveAll(i => i.itemId == itemId);
-                }
+                
+                
+                // _dataManager.ownedItems = oldItemList;
+                
+                // _dataManager.ownedItems = new List<Item>();
+                // var itemNumber = 0;
+                // foreach (var item in oldItemList)
+                // {
+                //     if (item.itemName != itemNameText.text)
+                //     {
+                //         _dataManager.ownedItems.Add(item);   
+                //     }
+                //     else
+                //     {
+                //         if (itemNumber == 0)
+                //         {
+                //             itemNumber = 1;
+                //             continue;
+                //         }
+                //         else
+                //         {
+                //             _dataManager.ownedItems.Add(item);
+                //         }
+                //     }
+                // }
+                //
+                // // _dataManager.ownedItems.RemoveAll(i => i.itemId == itemId);
+                // bool isSell= false;
+                // var oldOwnedItems = _dataManager.ownedItems; 
+                // _dataManager.ownedItems = new List<Item>();
+                // foreach (var item in oldItemList)
+                // {
+                //     if (item.itemName != itemNameText.text)
+                //     {
+                //         _dataManager.ownedItems.Add(item);
+                //     }
+                //     else if (item.itemName == itemNameText.text)
+                //     {
+                //         if (isSell == false)
+                //         {
+                //             isSell = true;    
+                //             continue;
+                //         }
+                //         _dataManager.ownedItems.Add(item);
+                //     }
+                // }
+                
+                // foreach (var character in inventoryManager.dataManager.currentCharacterList)
+                // {
+                //     character.itemList?.RemoveAll(i => i.itemId == itemId);
+                // }
 
                 foreach (var slot in inventoryManager.slotList)
                 {
-                    ReItem(slot.GetComponent<ItemButtonManager>());
+                    _dataManager.gameManager.ReItem(slot.GetComponent<ItemButtonManager>());
                     slot.gameObject.SetActive(false);
                 }
                 
@@ -211,12 +414,16 @@ namespace Game.Window
             
             _dataManager.SaveBaseData();
             _dataManager.SaveOwnedItems();
+            marketManager.ShowOwnedItem();
         }
+        
+        void RemoveItem(List<Item> itemList)
+        {}
         
         void CloseOrOpen(bool active)
         {
             sound.Play();
-            gameObject.SetActive(active != false); 
+            gameObject.SetActive(active); 
         }
 
         void ChangeGold(ItemButtonType type)

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,9 +8,10 @@ namespace Game.MainGame
 
         public bool isClosed = false;
         public bool isFollow = false;
-        private readonly EaseType _baseMoveType = EaseType.linear ;
+        // public EaseType baseMoveType = EaseType.linear ;
 
-        public float moveSpeed = 0.28f;
+        public float moveNormalSpeed = 0.28f;
+        public float moveSlowSpeed = 0.30f;
         public float turnSpeed = 0.0f;
 
         Player _player;
@@ -39,9 +39,9 @@ namespace Game.MainGame
             if (_sword == null) _sword = _gameManager.transform.Find("Sword").GetComponent<Sign>();
         }
 
-        void MoveUnit (Vector3 destinationPos, float delayTime = 0f)
+        void MoveUnit (Vector3 destinationPos, float moveSpeed, float delayTime = 0f, EaseType moveType = EaseType.linear)
         {
-            StartCoroutine(MoveRoutine(destinationPos, delayTime));
+            StartCoroutine(MoveRoutine(destinationPos, moveSpeed, delayTime, moveType ));
         }
 
         private List<Vector3> MakeTransform (List<TileNode> way){
@@ -59,9 +59,10 @@ namespace Game.MainGame
         // start
         public void IndicateUnit(List<TileNode> way, bool skill = false)
         {
-            way.Reverse();
+            
             if (_gameManager.currentPlayer == null) return;
 
+            way.Reverse();
             StartCoroutine(Indicator(MakeTransform(way), skill));
         }
 
@@ -122,10 +123,24 @@ namespace Game.MainGame
 
             // do
             _board.ResetBoundary();
+
+            var wayCount = 0;
+            
             foreach (var destination in way)
             {
-                MoveUnit(destination);
-
+                if (wayCount == 0)
+                {
+                    MoveUnit(destination, moveSlowSpeed,0, EaseType.easeInSine);    
+                }
+                else if (wayCount == nCount)
+                {
+                    MoveUnit(destination, moveSlowSpeed,0, EaseType.easeOutSine);
+                }
+                else
+                {
+                    MoveUnit(destination, moveNormalSpeed,0, EaseType.linear);
+                }
+                
                 // camera move
                 while (_player.activeState == ActiveState.Moving) 
                 {                
@@ -135,11 +150,15 @@ namespace Game.MainGame
                     _cameraController.CloseCamera(position, isClosed, true);
                     _cameraController.FollowCamera(position, isFollow);
                 }
+
+                wayCount += 1;
             }
 
             _animator.SetBool(Running, false);
 
             yield return null;
+            
+            _gameManager.Marked(way, _player);
 
             // end
             EndIndicator(skill);
@@ -156,14 +175,14 @@ namespace Game.MainGame
             }
         }
 
-        IEnumerator MoveRoutine (Vector3 destinationPos, float delayTime) 
+        IEnumerator MoveRoutine (Vector3 destinationPos, float moveSpeed, float delayTime, EaseType moveType = EaseType.linear) 
         {   
             _player.activeState = ActiveState.Moving;
 
             yield return new WaitForSeconds (delayTime);
 
-            gameObject.MoveTo (destinationPos, moveSpeed, delayTime, _baseMoveType);
-            gameObject.LookTo (destinationPos, turnSpeed, delayTime, _baseMoveType);
+            gameObject.MoveTo (destinationPos, moveSpeed, delayTime, moveType);
+            gameObject.LookTo (destinationPos, turnSpeed, delayTime, moveType);
             
             while (Vector3.Distance(destinationPos, transform.position) > 0.01f) 
             {

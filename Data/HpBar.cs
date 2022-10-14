@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Game.Window;
 using UnityEngine;
 using UnityEngine.UI;
@@ -16,6 +18,8 @@ namespace Game.Data
         public GameObject blockObject;
         public DataManager dataManager;
         public int characterId;
+        public string characterName;
+        public List<GameObject> blocks;
 
         private void Awake()
         {
@@ -26,7 +30,7 @@ namespace Game.Data
         
         public void MakeHp()
         {
-            var character = dataManager.currentCharacterList.Find(i => i.characterId == characterId);
+            var character = dataManager.CurrentCharacterList.Find(i => i.characterName == characterName);
 
             if (character == null) return;
 
@@ -43,9 +47,24 @@ namespace Game.Data
             MakeBlock(character);
         }
 
+        public void RemakeHp()
+        {
+            var character = dataManager.CurrentCharacterList.Find(i => i.characterName == characterName);
+            if (character == null) return;
+            
+            foreach (var block in blocks)
+            {
+                Destroy(block);
+            }
+            
+            blocks = new List<GameObject>();
+
+            MakeHp();
+        }
+
         public void RenewalHp()
         {
-            var character = dataManager.currentCharacterList.Find(i => i.characterId == characterId);
+            var character = dataManager.CurrentCharacterList.Find(i => i.characterName == characterName);
             
             if (character == null) return;
 
@@ -65,6 +84,7 @@ namespace Game.Data
             {
                 var newBlock = Instantiate(blockObject, _block.position, Quaternion.identity, _block);
                 newBlock.GetComponent<RectTransform>().localPosition = new Vector3(_oneBlockPos * i, 0f, 0f);
+                blocks.Add(newBlock);
             }
         }
     }

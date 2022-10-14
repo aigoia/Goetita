@@ -12,6 +12,8 @@ namespace Game.MainGame
 		float _thisWidth;
 		float _oneBlockPos;
 		int _neededBlock;
+		public float blockY = 0f;
+		public float blockZ = 0f;
 		[SerializeField] private int bonus = 2;
 		[SerializeField] GameObject blockObject;
 		GameManager _gameManager;
@@ -57,7 +59,7 @@ namespace Game.MainGame
 			for (int i = 1; i < thisPlayer.baseHp ; i++)
 			{
 				var newBlock = Instantiate(blockObject, _block.position, Quaternion.identity, _block);
-				newBlock.GetComponent<RectTransform>().localPosition = new Vector3(_oneBlockPos * i, 0f, 0f);
+				newBlock.GetComponent<RectTransform>().localPosition = new Vector3(_oneBlockPos * i, blockY, blockZ);
 			}
 		}
 		
@@ -67,7 +69,7 @@ namespace Game.MainGame
 			for (int i = 1; i < thisEnemy.baseHp ; i++)
 			{
 				var newBlock = Instantiate(blockObject, _block.position, Quaternion.identity, _block);
-				newBlock.GetComponent<RectTransform>().localPosition = new Vector3(_oneBlockPos * i, 0f, 0f);
+				newBlock.GetComponent<RectTransform>().localPosition = new Vector3(_oneBlockPos * i, blockY, blockZ);
 			}
 		}
 	

@@ -18,6 +18,7 @@ namespace Game.Window
 
 		public void Take()
 		{
+			var newCharacters = inventoryManager.dataManager.CurrentCharacterList;
 			// Appear
 			var currentItems = selectedCharacter.itemList;
 			if (currentItems.Count >= inventoryManager.limitSlot) return;
@@ -32,30 +33,24 @@ namespace Game.Window
 					inventoryManager.equipItem.Add(newItem);
 					slot.gameObject.SetActive(true);
 					var slotButton = slot.GetComponent<ItemButtonManager>();
-					Insert(slotButton, newItem);
+					inventoryManager.dataManager.gameManager.Insert(slotButton, newItem);
 					continue;
 				}
 			}
 			
 			// Disappear
 			print("this : " + currentItem.itemId);
-			foreach (var character in inventoryManager.dataManager.currentCharacterList)
+			foreach (var character in newCharacters)
 			{
-				if (character.characterId == itemHaveCharacter.characterId)
+				if (character.characterName == itemHaveCharacter.characterName)
 				{
 					character.itemList.Remove(character.itemList.Find(i => i.itemId == currentItem.itemId));
 				}
 			}
 			
-			inventoryManager.dataManager.SaveCharacter(inventoryManager.dataManager.currentCharacterList);
+			inventoryManager.dataManager.SaveCharacter(newCharacters);
 		}
 		
-		private void Insert(ItemButtonManager itemButton, Item item)
-		{
-			itemButton.itemId = item.itemId;
-			itemButton.itemNameText.text = item.itemName;
-			itemButton.priceText.text = item.itemPrice.ToString();
-			itemButton.priceInt = item.itemPrice;
-		}
+
 	}
 }

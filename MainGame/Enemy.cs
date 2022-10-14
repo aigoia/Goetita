@@ -1,7 +1,6 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using System.IO;
+// using UnityEditor.ShaderGraph;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using Random = UnityEngine.Random;
@@ -12,21 +11,40 @@ namespace Game.MainGame
 	{
 		Normal, BeHit
 	}
+
 	public enum BuyHit
 	{
-		Normal, BuyHit
+		Normal,
+		BuyHit
 	}
-	
+
+	public enum ResistType
+	{
+		Non, Magic
+	}
+
+	public enum AttackType
+	{
+		Non, Physics, Magic, ArmorPiercing	
+	}
+
 	public class Enemy : MonoBehaviour
 	{
 		public bool battle = false;
+
+		public int grade = 0;
+		public AttackType attackType = AttackType.Non;
+		public ResistType resistType = ResistType.Non;
+		public int armor = 0;
+
+		public bool isImpact;
 
 		// HP
 		public int baseHp = 4;
 		public int currentHp = 4;
 		
 		public CharacterBar characterBar;
-		public GameObject range;
+		public GameObject aim;
 
 		// deal
 		public int baseDeal = 4;
@@ -50,13 +68,13 @@ namespace Game.MainGame
 		private SoundManager _soundManager;
 		public Vector3 direction;
 		Transform _model;
-		
 		public bool noWay = false;
 
 		public GameObject moveBaseArea;
 		public GameObject moveDoubleArea;
 		public List<TileNode> baseRangeArea;
 		public List<TileNode> rangeArea;
+		public GameObject sight;
 
 		public TurnState turnState = TurnState.Waiting;
 		public ActiveState activeState = ActiveState.NotAnything;
@@ -67,7 +85,11 @@ namespace Game.MainGame
 		private static readonly int Die = Animator.StringToHash("Die");
 		private static readonly int Withstand = Animator.StringToHash("Withstand");
 		private static readonly int RangeAttack = Animator.StringToHash("RangeAttack");
+		private static readonly int Breath = Animator.StringToHash("Breath");
 
+		public UnitClass enemyClass = UnitClass.One;
+		public Trait trait = Trait.Non;
+		
 		void Awake()
 		{
 			currentHp = baseHp;
@@ -81,11 +103,38 @@ namespace Game.MainGame
 			if (moveBaseArea == null) moveBaseArea = transform.Find("Utility").Find("MoveBaseArea").gameObject;
 			if (moveDoubleArea == null) moveDoubleArea = transform.Find("Utility").Find("MoveDoubleArea").gameObject;
 			if (_model == null) _model = transform.Find("Model");
-			if (range == null) range = moveBaseArea = transform.Find("Utility").Find("Range").gameObject;
+			if (aim == null) aim = transform.Find("Utility").Find("Range").gameObject;
+		}
+
+		[ContextMenu("Setting")]
+		public void Setting()
+		{
+			animator = GetComponent<Animator>(); 
+			aim = moveBaseArea = transform.Find("Utility").Find("Range").gameObject;
+			moveBaseArea = transform.Find("Utility").Find("MoveBaseArea").gameObject;
+			_model = transform.Find("Model");
+			moveDoubleArea = transform.Find("Utility").Find("MoveDoubleArea").gameObject;
+			_board = FindObjectOfType<Board>();
+			enemyAi = FindObjectOfType<EnemyAi>();
+			enemyMove = GetComponent<EnemyMove>();
+		}
+		
+		private void Start()
+		{
+			DifferentBreath();
+		}
+        		
+		void DifferentBreath()
+		{
+			var random = Random.Range(0.4f, 0.5f);
+			animator.SetFloat(Breath, random);
 		}
 
 		public bool UnitWalk(AreaOrder areaOrder, WalkOrder walkOrder, TileNode endNode)
 		{
+			// print(currentVigor);
+			if (currentVigor == enemyAi.emptyVigor) return false;
+			
 			TileNode newNode = endNode;
 
 			if (walkOrder == WalkOrder.Random)
@@ -169,8 +218,7 @@ namespace Game.MainGame
 
 		void DamageCopy(Player player)
 		{
-			var damage = (int)Random.Range(baseDeal, baseDeal + plusDeal);
-			player.copyHp = player.copyHp - damage;
+			player.copyHp = Damage(player, player.copyHp);
 			
 			player.characterBar.Fill(player, player.copyHp);
 		}
@@ -198,12 +246,45 @@ namespace Game.MainGame
 			_gameManager.areaCheck.Attention(this);
 		}
 		
-		public void Damage(Player player)
+		public int Damage(Player player, int hp)
 		{
-			var damage = (int)Random.Range(baseDeal, baseDeal + plusDeal);
+			var newHp = hp;
+			
+			int damage = 0;
+
+			if (this.attackType == AttackType.ArmorPiercing)
+			{
+				int newArmor =  (int)(player.armor * _gameManager.armorPiercing);
+				damage = (int)Random.Range(0, plusDeal) + baseDeal - newArmor - _gameManager.plusArmorPiercing;
+			}
+			else if (this.attackType == AttackType.Physics)
+			{
+				damage = (int)Random.Range(0, plusDeal) + baseDeal - player.armor;
+			}
+			else if (this.attackType == AttackType.Magic)
+			{
+				if (player.resistType == ResistType.Magic)
+				{
+					damage = (int)((int)Random.Range(0, plusDeal) * _gameManager.magicResist) + baseDeal;
+				}
+				else
+				{
+					damage = (int)Random.Range(0, plusDeal) + baseDeal;	
+				}
+			}
+			else if (this.attackType == AttackType.Non)
+			{
+				damage = (int)Random.Range(0, plusDeal) + baseDeal - player.armor;
+			}
+
+			if (damage <= 0) damage = _gameManager.minimalDamage;
+            
 			player.currentHp = player.currentHp - damage;
 			
-			if (player.currentHp <= 0)
+			newHp = newHp - damage;
+			// print(player.name + " : " +player.currentHp)
+
+			if (newHp <= 0)
 			{
 				var newList = new List<Player>();
 				
@@ -217,6 +298,8 @@ namespace Game.MainGame
 				
 				_gameManager.activePlayerList = newList;
 			}
+
+			return newHp;
 		}
 		
 		IEnumerator WaitCloseSkill(Player player, float farFrom)
@@ -244,19 +327,21 @@ namespace Game.MainGame
 			player.beHit = BeHit.BeHit;
 			buyHit = BuyHit.BuyHit;
 			
-			while (_gameManager.swordMin > animator.GetCurrentAnimatorStateInfo(0).normalizedTime ||
-			       animator.GetCurrentAnimatorStateInfo(0).normalizedTime >_gameManager.swordMax)
+			while (_gameManager.motionManager.swordMin > animator.GetCurrentAnimatorStateInfo(0).normalizedTime ||
+			       animator.GetCurrentAnimatorStateInfo(0).normalizedTime >_gameManager.motionManager.swordMax)
 			{
 				yield return null;
 			}
 			
-			while (animator.GetCurrentAnimatorStateInfo(0).normalizedTime < _gameManager.swordHit)
+			while (animator.GetCurrentAnimatorStateInfo(0).normalizedTime < _gameManager.motionManager.swordHitEnemy)
 			{
 				yield return null; 
 			}
 			
 			_gameManager.effectManager.SwordEffectEnemy(player, this);
-			_soundManager.PlaySound(Sound.Sword);
+			// _soundManager.PlaySound(Sound.Sword);
+			_soundManager.PlaySound(isImpact == true ? Sound.Impact : Sound.Sword);
+
 			
 			DamageCopy(player);
 			CheckDead(player);
@@ -269,7 +354,7 @@ namespace Game.MainGame
 
 			var thisTime = player.animator.GetCurrentAnimatorStateInfo(0).normalizedTime;
 				
-			while (player.animator.GetCurrentAnimatorStateInfo(0).normalizedTime < _gameManager.swordEndTime)
+			while (player.animator.GetCurrentAnimatorStateInfo(0).normalizedTime < _gameManager.motionManager.swordEndTimeEnemy)
 			{
 				yield return null;
 			}
@@ -281,6 +366,8 @@ namespace Game.MainGame
 			{
 				AfterDead(player);
 			}
+			
+			currentVigor = enemyAi.emptyVigor;
 		}
 
 		IEnumerator WaitRangeSkill(Player player)
@@ -298,15 +385,15 @@ namespace Game.MainGame
 			player.beHit = BeHit.BeHit;
 			buyHit = BuyHit.BuyHit;
 
-			while (_gameManager.swordMin > animator.GetCurrentAnimatorStateInfo(0).normalizedTime ||
-			       animator.GetCurrentAnimatorStateInfo(0).normalizedTime >_gameManager.rangeMax)
+			while (_gameManager.motionManager.swordMin > animator.GetCurrentAnimatorStateInfo(0).normalizedTime ||
+			       animator.GetCurrentAnimatorStateInfo(0).normalizedTime >_gameManager.motionManager.rangeMax)
 			{
 				yield return null;
 			}
 			
 			_soundManager.PlaySound(Sound.Gun);
 			
-			while (animator.GetCurrentAnimatorStateInfo(0).normalizedTime < _gameManager.rangeHit)
+			while (animator.GetCurrentAnimatorStateInfo(0).normalizedTime < _gameManager.motionManager.rangeHit)
 			{
 				yield return null; 
 			}
@@ -323,7 +410,7 @@ namespace Game.MainGame
 			
 			buyHit = BuyHit.Normal;
 
-			while (player.animator.GetCurrentAnimatorStateInfo(0).normalizedTime < _gameManager.rangeEndTime)
+			while (player.animator.GetCurrentAnimatorStateInfo(0).normalizedTime < _gameManager.motionManager.rangeEndTime)
 			{
 				yield return null;
 			}
@@ -336,6 +423,8 @@ namespace Game.MainGame
 			{
 				AfterDead(player);
 			}
+			
+			currentVigor = enemyAi.emptyVigor;
 		}
 
 		public void RenewalPlayerList()
@@ -365,6 +454,7 @@ namespace Game.MainGame
 
 		private bool MovingSkill(TileNode endNode, List<TileNode> allNodeList, AreaOrder areaOrder, WalkOrder walkOrder)
 		{
+			
 			if (endNode == null) 
 			{
 				print("EndNode : " + endNode);
@@ -391,12 +481,20 @@ namespace Game.MainGame
 				return false;
 			}
 
-			if (_cameraController.cameraZoomOut == 15)
+			if (_cameraController.rangeLevel == 3)
 			{
 				enemy.transform.position = way[0].transform.position;
 				return true;
 			}
-			
+			if (_gameManager.audioManager != null)
+			{
+				if (!_gameManager.audioManager.enemyMove)
+				{
+					enemy.transform.position = way[0].transform.position;
+					return true;	
+				}
+			}
+
 			if (Vector3.Distance(_cameraController.transform.position, way[0].transform.position) < _cameraController.area)
 			{ 
 				enemy.enemyMove.IndicateUnit(way, areaOrder, walkOrder);	
@@ -421,7 +519,7 @@ namespace Game.MainGame
 
 			if (enemy.canTargeted && _gameManager.currentPlayer.currentVigor > 0)
 			{
-				_soundManager.PlayUi(SoundUi.Click);
+				// _soundManager.PlaySystem(SoundSystem.Click);
 				_gameManager.currentPlayer.StartRangeAttack(enemy);
 			}
 		}
@@ -438,7 +536,7 @@ namespace Game.MainGame
 			
 			if (hover)
 			{
-				_soundManager.PlayUi(SoundUi.Hover);
+				// _soundManager.PlaySystem(SoundSystem.Hover);
 			}
 		}
 

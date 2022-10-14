@@ -8,7 +8,7 @@ namespace Game.Window
     {
         public Canvas iconCanvas;
         public GameObject iconObject;
-        public Vector3 posCorrection = new Vector3(0f, 25f, 0f);
+        public Vector3 posCorrection = new Vector3(0f, 0f, 0f);
         public List<IconBase> iconBaseList;
         public CityAreaManager cityAreaManager;
 
@@ -72,7 +72,7 @@ namespace Game.Window
             }
             if (cityArea.assignedAccident.accidentType == AccidentType.Event)
             {
-                eventButton.SetActive(true);    
+                eventButton.SetActive(true);
             }
             if (cityArea.assignedAccident.accidentType == AccidentType.Market)
             {

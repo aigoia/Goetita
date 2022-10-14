@@ -125,7 +125,15 @@ namespace Game.MainGame
         {
             foreach (var item in list)
             {
-                print(item.characterName + "(" + item.characterId + ")");
+                print(item.characterName + "(" + item.characterName + ")");
+            }
+        }
+        
+        public static void PrintList(List<Item> list)
+        {
+            foreach (var item in list)
+            {
+                print(item.itemName + "(" + item.itemId + ")");
             }
         }
         
@@ -144,5 +152,19 @@ namespace Game.MainGame
             
             return returnList;
         }
+
+        public static int CountItem(List<Item> items, Item item)
+        {
+            int count = 0;
+            foreach (var countItem in items) 
+            {
+                if (item.itemName == countItem.itemName)
+                {
+                    count = count + 1;
+                }
+            }
+            return count;
+        }
+        
     }
 }

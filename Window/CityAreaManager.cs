@@ -13,10 +13,14 @@ namespace Game.Window
         public GameObject testIcon;
         public UiManager uiManager;
         public Vector3 areaScale = new Vector3(5f, 5f, 5f);
-        public int initCount = 1;
+        // public int initCount = 1;
         public Vector3 height = new Vector3(0, 0.5f, 0);
         public float moveSpeed = 1f;
         public DataManager dataManager;
+        public List<int> movingCost = new List<int>();
+        public Material baseMaterial;
+        public Material pointMaterial;
+        public CharacterManager characterManager;
 
         private void Awake()
         {
@@ -24,10 +28,19 @@ namespace Game.Window
             if (dataManager == null) dataManager = FindObjectOfType<DataManager>();
             if (testIcon == null) print("TestIcon is Missing");
             if (uiManager == null) uiManager = FindObjectOfType<UiManager>();
+            if (characterManager == null) characterManager = FindObjectOfType<CharacterManager>();
         }
 
         private void Start()
-        {
+        { 
+            var originArea = characterManager.WhereIam();
+
+            if (originArea != null)
+            {
+                uiManager.ButtonOff();
+                uiManager.ButtonOn(originArea);    
+            }
+
             UiCheck();
             dataManager.LoadPosition();
             iTween.MoveTo(mainCharacter, dataManager.whereData.currentPosition, moveSpeed);
@@ -48,8 +61,9 @@ namespace Game.Window
         void UiCheck()
         {
             uiManager.ButtonOff();
-        
-            var origin = new Vector3(mainCharacter.transform.position.x, 0f, mainCharacter.transform.position.z);
+
+            var position = mainCharacter.transform.position;
+            var origin = new Vector3(position.x, 0f, position.z);
         
             var hits = Physics.BoxCastAll(origin, areaScale, Vector3.up, 
                 Quaternion.identity, 0f, LayerMask.GetMask("CityArea"));
@@ -117,7 +131,6 @@ namespace Game.Window
                         }
                     }
                 }
-            
                 cityArea.connectedNodeList = connectedNodeList;
             }
         }
