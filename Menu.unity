@@ -2585,7 +2585,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   dataManager: {fileID: 2115412107}
-  initGold: 2200
+  initGold: 2700
   goldText: {fileID: 455709561}
   costSword: 500
   costGun: 600
@@ -35949,7 +35949,7 @@ PrefabInstance:
     - target: {fileID: 224922314182936220, guid: d723834a6276b4d9889855c06f44a37b,
         type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: -149.99991
+      value: -149.99988
       objectReference: {fileID: 0}
     - target: {fileID: 224953928338755598, guid: d723834a6276b4d9889855c06f44a37b,
         type: 3}
@@ -36196,8 +36196,8 @@ MonoBehaviour:
     unitClass: 0
     trait: 0
   baseData:
-    initGold: 600
-    currentGold: 600
+    initGold: 900
+    currentGold: 900
     turnDate: 0
     itemCount: 1
     initClear: 0

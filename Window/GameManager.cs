@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Game.Data;
 using Game.Menu;
@@ -18,7 +18,7 @@ namespace Game.Window
 		public TextMeshProUGUI turnDate;
 		public GameObject mainCanvas;
 		public MainCamera mainCamera;
-		
+
 		[Header("Team Panel")]
 		public GameObject basePanel;
 		public GameObject characterPanel;

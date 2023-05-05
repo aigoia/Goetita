@@ -17,8 +17,8 @@ namespace Game.Menu
         public int initGold = 3000;
         private int _newGold = 0;
         public TextMeshProUGUI goldText;
-        public int costSword = 700;
-        public int costGun = 800;
+        public int costSword = 500;
+        public int costGun = 600;
         public string swordText = "Claymore";
         public string gunText = "Gun";
         public GameObject minObject;

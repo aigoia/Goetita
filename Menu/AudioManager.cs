@@ -214,5 +214,4 @@ namespace Game.Menu
             }
         }
     }
-    
 }
