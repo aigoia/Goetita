@@ -6,6 +6,6 @@ Survive team even in a desperate situation when all your resources are running o
 ![goeita](https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/2114090/ss_464f419f46318db692be10cac683119630b8319c.600x338.jpg?t=1715595311)
 
 ### Link
-[Steam](https://store.steampowered.com/app/2114090/Goetita_Turnbased_City/)  
-[PV](https://youtu.be/H9iPBcMj-uw?si=F6xtdTNmO5kvaiZD)  
+- [Steam](https://store.steampowered.com/app/2114090/Goetita_Turnbased_City/)  
+- [PV](https://youtu.be/H9iPBcMj-uw?si=F6xtdTNmO5kvaiZD)  
 
